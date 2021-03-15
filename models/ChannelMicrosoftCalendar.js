@@ -24,7 +24,7 @@ class ChannelMicrosoftCalendar extends Model {
   }
 
   static get relationMappings() {
-    const Channel = require("./channel");
+    const Channel = require("./Channel");
     const MicrosoftCalendar = require("./MicrosoftCalendar");
     return {
       channels: {
