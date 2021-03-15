@@ -67,13 +67,6 @@
 		},
 		{
 			"type": "divider"
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "<https://example.com|See more...>"
-			}
 		}
 	]
 }

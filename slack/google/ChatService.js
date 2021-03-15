@@ -45,6 +45,7 @@ const getEventsTodays = (body) => {
 const convertBlocksEvents = (body, template) => {
   const { events } = body;
   const blocks = [...template.listEvent.blocks];
+  blocks[0].elements[0].image_url = `${Env.serverGOF("URL_PUBLIC")}/icon/GOOGLE_CALENDAR.png`;
   const blockEvent = JSON.stringify(blocks[1]);
   blocks.splice(1, 1);
   for (let i = 0; i < events.length; i++) {

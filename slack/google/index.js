@@ -218,8 +218,21 @@ class SlackGoogle extends BaseServer {
    * @return {Promise<{object}>}
    */
   async handlerEventsToday(body) {
+    const { channel_id } = body;
+    const option = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}`,
+      },
+      data: {
+        channel: channel_id,
+      },
+      url:
+        Env.chatServiceGet("API_URL") +
+        Env.chatServiceGet("API_POST_MESSAGE"),
+    };
     try {
-      const { channel_id } = body;
       let events = null;
       events = await this.getValueRedis(channel_id);
       body.userInfo = await this.getUserInfo(body.user_id);
@@ -241,28 +254,18 @@ class SlackGoogle extends BaseServer {
         events = JSON.parse(events);
       }
       body.events = events;
-      const option = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}`,
-        },
-        data: {
-          channel: channel_id,
-        },
-        url:
-          Env.chatServiceGet("API_URL") +
-          Env.chatServiceGet("API_POST_MESSAGE"),
-      };
+
       if (events.length === 0) {
         option.data.text = " You are free today ! ";
       } else {
         const blocksView = await convertBlocksEvents(body, this.template);
         option.data.blocks = blocksView;
       }
-      await Axios(option);
+      return option;
     } catch (e) {
       console.log("⇒⇒⇒ handlerEventsToday ERROR: ", e);
+      option.data.text = " Get event today fail ! Try again.";
+      return option;
     }
   }
   /**
@@ -273,6 +276,7 @@ class SlackGoogle extends BaseServer {
    */
   async handlerCommand(req, res) {
     try {
+      res.status(202).send();
       const {text} = req.body;
       let option = null;
       const type = text.trim();
@@ -297,12 +301,10 @@ class SlackGoogle extends BaseServer {
           option = null;
           break
       }
-
       if (option) await Axios(option)
         .then(({data}) => {
           if (!data.ok) throw data
         });
-      res.status(200).send("OK");
     } catch (e) {
       console.log("⇒⇒⇒ Handler Command ERROR: ", e);
       res.status(204).send("Error");
