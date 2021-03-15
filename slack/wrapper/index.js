@@ -170,7 +170,8 @@ class SlackWrapper extends BaseServer {
     try {
       if (challenge) return res.status(200).send(challenge);
       if (event) return this.handlerEvent(req, res);
-      if (/\/cal/.test(command)) {
+      const regex = new RegExp(`\/${Env.getOrFail("SLACK_CMD_CALENDAR")}`);
+      if (regex.test(command)) {
         if (/^go/.test(req.body.text)) return this.proxyGO(req, res, next);
         if (/^mi/.test(req.body.text)) return this.proxyMI(req, res, next);
         return this.handleCommand(req, res, next);

@@ -338,9 +338,10 @@ class SlackMicrosoft extends BaseServer {
       command = null,
     } = req.body;
     try {
+      const regex = new RegExp(`\/${Env.getOrFail("SLACK_CMD_CALENDAR")}`);
       if (event) {
         return this.handlerEvent(req, res);
-      } else if (command && /^\/cal$/.test(command)) {
+      } else if (command && regex.test(command)) {
         return this.handlerCommand(req, res);
       } else if (payload) {
         return this.handlerPayload(req, res);
