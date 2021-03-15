@@ -12,26 +12,26 @@ const {v4: uuidV4} = require("uuid");
  * @returns {Promise}
  */
 const getToken = (code) => {
-	return new Promise((resolve, reject) => {
-		let url = Env.resourceServerGet("API_URL_OAUTH");
-		url += `${Env.resourceServerGet("API_TOKEN")}`;
-		let data = {
-			client_id: Env.resourceServerGet("CLIENT_ID"),
-			client_secret: Env.resourceServerGet("CLIENT_SECRET"),
-			code,
-			grant_type: Env.resourceServerGet("GRANT_TYPE"),
-			redirect_uri: Env.resourceServerGet("REDIRECT_URI"),
-		};
-		const options = {
-			method: "POST",
-			headers: {"content-type": "application/x-www-form-urlencoded"},
-			data: qs.stringify(data),
-			url,
-		};
-		Axios(options)
-			.then((res) => resolve(res.data))
-			.catch((err) => reject(err));
-	});
+  return new Promise((resolve, reject) => {
+    let url = Env.resourceServerGet("API_URL_OAUTH");
+    url += `${Env.resourceServerGet("API_TOKEN")}`;
+    let data = {
+      client_id: Env.resourceServerGet("CLIENT_ID"),
+      client_secret: Env.resourceServerGet("CLIENT_SECRET"),
+      code,
+      grant_type: Env.resourceServerGet("GRANT_TYPE"),
+      redirect_uri: Env.resourceServerGet("REDIRECT_URI"),
+    };
+    const options = {
+      method: "POST",
+      headers: {"content-type": "application/x-www-form-urlencoded"},
+      data: qs.stringify(data),
+      url,
+    };
+    Axios(options)
+      .then((res) => resolve(res.data))
+      .catch((err) => reject(err));
+  });
 };
 /**
  *
@@ -40,22 +40,22 @@ const getToken = (code) => {
  */
 
 const watchGoogleCalendar = async ({id_calendar, id_account}) => {
-	const iat = Date.now();
-	const obj = {idCalendar: id_calendar, idAccount: id_account, iat};
-	const idSub = uuidV4();
-	const tokens = cryptoEncode(JSON.stringify(obj));
-	const options = {
-		method: 'POST',
-		url: `${Env.resourceServerGOF("API_URL")}/calendar/v3/calendars/${id_calendar}/events/watch`,
-		headers: {'X-Google-AccountId': id_account},
-		data: {
-			id: idSub,
-			type: Env.resourceServerGOF("TYPE"),
-			address: Env.resourceServerGOF("ADDRESS"),
-			"token": tokens,
-		}
-	};
-	return Axios(options);
+  const iat = Date.now();
+  const obj = {idCalendar: id_calendar, idAccount: id_account, iat};
+  const idSub = uuidV4();
+  const tokens = cryptoEncode(JSON.stringify(obj));
+  const options = {
+    method: 'POST',
+    url: `${Env.resourceServerGOF("API_URL")}/calendar/v3/calendars/${id_calendar}/events/watch`,
+    headers: {'X-Google-AccountId': id_account},
+    data: {
+      id: idSub,
+      type: Env.resourceServerGOF("TYPE"),
+      address: Env.resourceServerGOF("ADDRESS"),
+      "token": tokens,
+    }
+  };
+  return Axios(options);
 };
 
 /**
@@ -65,18 +65,18 @@ const watchGoogleCalendar = async ({id_calendar, id_account}) => {
  * @returns {Promise}
  */
 const getListCalendar = (idAccount, accessToken) => {
-	const options = {
-		method: "GET",
-		headers: {Authorization: `Bearer ${accessToken}`},
-		url:
-			Env.resourceServerGOF("API_URL") +
-			Env.resourceServerGOF("API_lIST_CALENDAR"),
-	};
-	return new Promise((resolve, reject) => {
-		Axios(options)
-			.then((res) => resolve(res.data))
-			.catch((error) => reject(error));
-	});
+  const options = {
+    method: "GET",
+    headers: {Authorization: `Bearer ${accessToken}`},
+    url:
+      Env.resourceServerGOF("API_URL") +
+      Env.resourceServerGOF("API_lIST_CALENDAR"),
+  };
+  return new Promise((resolve, reject) => {
+    Axios(options)
+      .then((res) => resolve(res.data))
+      .catch((error) => reject(error));
+  });
 };
 
 /**
@@ -85,18 +85,18 @@ const getListCalendar = (idAccount, accessToken) => {
  * @returns {Promise}
  */
 const getProfile = (accessToken) => {
-	let url = Env.resourceServerGet("API_URL");
-	url += `${Env.resourceServerGet("API_USER_INFO")}`;
-	return new Promise((resolve, reject) => {
-		const options = {
-			method: "GET",
-			headers: {Authorization: `Bearer ${accessToken}`},
-			url: url,
-		};
-		Axios(options)
-			.then((res) => resolve(res.data))
-			.catch((err) => reject(err));
-	});
+  let url = Env.resourceServerGet("API_URL");
+  url += `${Env.resourceServerGet("API_USER_INFO")}`;
+  return new Promise((resolve, reject) => {
+    const options = {
+      method: "GET",
+      headers: {Authorization: `Bearer ${accessToken}`},
+      url: url,
+    };
+    Axios(options)
+      .then((res) => resolve(res.data))
+      .catch((err) => reject(err));
+  });
 };
 
 /**
@@ -105,20 +105,20 @@ const getProfile = (accessToken) => {
  * @return {Promise<unknown>}
  */
 const getInfoChannel = (idChannel) => {
-	return new Promise((resolve, reject) => {
-		let url = Env.chatServiceGOF("API_URL");
-		url += Env.chatServiceGOF("API_CHANNEL_INFO");
-		url += idChannel;
-		const options = {
-			method: "GET",
-			headers: {Authorization: `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}`},
-			data: qs.stringify({channel: idChannel}),
-			url,
-		};
-		Axios(options)
-			.then((res) => resolve(res.data.channel))
-			.catch((err) => reject(err));
-	});
+  return new Promise((resolve, reject) => {
+    let url = Env.chatServiceGOF("API_URL");
+    url += Env.chatServiceGOF("API_CHANNEL_INFO");
+    url += idChannel;
+    const options = {
+      method: "GET",
+      headers: {Authorization: `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}`},
+      data: qs.stringify({channel: idChannel}),
+      url,
+    };
+    Axios(options)
+      .then((res) => resolve(res.data.channel))
+      .catch((err) => reject(err));
+  });
 };
 /**
  *
@@ -126,13 +126,13 @@ const getInfoChannel = (idChannel) => {
  * @returns {Promise}
  */
 const getTimeZoneGoogle = (idAccount) => {
-	const options = {
-		method: "GET",
+  const options = {
+    method: "GET",
     headers: {'X-Google-AccountId': idAccount},
-		url:
-			Env.resourceServerGOF("API_URL") + Env.resourceServerGOF("API_TIME_ZONE"),
-	};
-	return Axios(options);
+    url:
+      Env.resourceServerGOF("API_URL") + Env.resourceServerGOF("API_TIME_ZONE"),
+  };
+  return Axios(options);
 };
 
 /**
@@ -141,10 +141,10 @@ const getTimeZoneGoogle = (idAccount) => {
  * @returns {Promise}
  */
 const saveInfoChannel = (channel) => {
-	return Channel.query().insert({
-		id: channel.id,
-		name: channel.name,
-	});
+  return Channel.query().insert({
+    id: channel.id,
+    name: channel.name,
+  });
 };
 
 /**
@@ -157,7 +157,7 @@ const saveChannelAccount = async (idChannel, idAccount) => {
   const result = await ChannelGoogleAccount.query()
     .where("id_channel", idChannel)
     .where("id_account", idAccount);
-  if(result.length === 0){
+  if (result.length === 0) {
     return ChannelGoogleAccount.query().insert({
       id_channel: idChannel,
       id_account: idAccount,
@@ -166,12 +166,12 @@ const saveChannelAccount = async (idChannel, idAccount) => {
 };
 
 module.exports = {
-	getToken,
-	getListCalendar,
-	getProfile,
-	getInfoChannel,
-	saveInfoChannel,
-	watchGoogleCalendar,
-	getTimeZoneGoogle,
+  getToken,
+  getListCalendar,
+  getProfile,
+  getInfoChannel,
+  saveInfoChannel,
+  watchGoogleCalendar,
+  getTimeZoneGoogle,
   saveChannelAccount
 };

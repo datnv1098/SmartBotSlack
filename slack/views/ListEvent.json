@@ -1,78 +1,78 @@
 {
-	"title": {
-		"type": "plain_text",
-		"text": "My App",
-		"emoji": true
-	},
-	"submit": {
-		"type": "plain_text",
-		"text": "Submit",
-		"emoji": true
-	},
-	"type": "modal",
-	"close": {
-		"type": "plain_text",
-		"text": "Cancel",
-		"emoji": true
-	},
-	"blocks": [
-		{
-			"type": "header",
-			"text": {
-				"type": "plain_text",
-				"text": "List event calendar",
-				"emoji": true
-			}
-		},
-		{
-			"type": "section",
-			"fields": [
-				{
-					"type": "mrkdwn",
-					"text": "*Triển Khai dự án mới*"
-				},
-				{
-					"type": "mrkdwn",
-					"text": "1:00PM-2:00PM"
-				},
-				{
-					"type": "mrkdwn",
-					"text": "_phòng họp số 1_"
-				},
-				{
-					"type": "mrkdwn",
-					"text": "27-02-2021"
-				}
-			],
-			"accessory": {
-				"type": "overflow",
-				"options": [
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "Edit event",
-							"emoji": true
-						},
-						"value": "edit-event"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "Delete event",
-							"emoji": true
-						},
-						"value": "delete-event"
-					}
-				],
-				"action_id": "overflow-action"
-			}
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "<https://example.com|View request>"
-			}
-		}
-	]
+  "title": {
+    "type": "plain_text",
+    "text": "My App",
+    "emoji": true
+  },
+  "submit": {
+    "type": "plain_text",
+    "text": "Submit",
+    "emoji": true
+  },
+  "type": "modal",
+  "close": {
+    "type": "plain_text",
+    "text": "Cancel",
+    "emoji": true
+  },
+  "blocks": [
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "List event calendar",
+        "emoji": true
+      }
+    },
+    {
+      "type": "section",
+      "fields": [
+        {
+          "type": "mrkdwn",
+          "text": "*Triển Khai dự án mới*"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "1:00PM-2:00PM"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "_phòng họp số 1_"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "27-02-2021"
+        }
+      ],
+      "accessory": {
+        "type": "overflow",
+        "options": [
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "Edit event",
+              "emoji": true
+            },
+            "value": "edit-event"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "Delete event",
+              "emoji": true
+            },
+            "value": "delete-event"
+          }
+        ],
+        "action_id": "overflow-action"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "<https://example.com|View request>"
+      }
+    }
+  ]
 }

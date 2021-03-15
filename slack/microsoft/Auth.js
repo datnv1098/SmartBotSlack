@@ -8,7 +8,7 @@ const Channel = require("../../models/Channel");
 const ChannelsCalendar = require("../../models/ChannelsCalendar");
 const ChannelMicrosoftAccount = require("../../models/ChannelMicrosoftAccount");
 const ChannelMicrosoftCalendar = require("../../models/ChannelMicrosoftCalendar");
-const { createSubscription } = require('./Subscription');
+const {createSubscription} = require('./Subscription');
 
 /**
  * Lay tai nguyen tokens
@@ -28,7 +28,7 @@ const getToken = (code) => {
     };
     const options = {
       method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
+      headers: {"content-type": "application/x-www-form-urlencoded"},
       data: qs.stringify(data),
       url:
         Env.resourceServerGOF("API_URL_AUTH") +
@@ -48,7 +48,7 @@ const getToken = (code) => {
 const getListCalendar = (idAccount) => {
   const options = {
     method: "GET",
-    headers: { 'X-Microsoft-AccountId': idAccount },
+    headers: {'X-Microsoft-AccountId': idAccount},
     url:
       Env.resourceServerGOF("GRAPH_URL") +
       Env.resourceServerGOF("GRAPH_CALENDARS"),
@@ -68,7 +68,7 @@ const getListCalendar = (idAccount) => {
 const getTimeZoneOutlook = (accessTokenAzure) => {
   const options = {
     method: "GET",
-    headers: { Authorization: `Bearer ${accessTokenAzure}` },
+    headers: {Authorization: `Bearer ${accessTokenAzure}`},
     url:
       Env.resourceServerGOF("GRAPH_URL") + Env.resourceServerGOF("GRAPH_MAILBOX_SETTINGS"),
   };
@@ -83,7 +83,7 @@ const getTimeZoneOutlook = (accessTokenAzure) => {
 const getTimeZoneSupport = (accessTokenAzure) => {
   const options = {
     method: "GET",
-    headers: { Authorization: `Bearer ${accessTokenAzure}` },
+    headers: {Authorization: `Bearer ${accessTokenAzure}`},
     url: Env.resourceServerGOF("GRAPH_URL") + Env.resourceServerGOF("GRAPH_TIMEZONE_SUPPORT"),
   };
   return axios(options);
@@ -99,7 +99,7 @@ const getProfileUser = (accessTokenAzure) => {
   return new Promise((resolve, reject) => {
     const options = {
       method: "GET",
-      headers: { Authorization: `Bearer ${accessTokenAzure}` },
+      headers: {Authorization: `Bearer ${accessTokenAzure}`},
       url:
         Env.resourceServerGOF("GRAPH_URL") +
         Env.resourceServerGOF("GRAPH_USER"),
@@ -163,7 +163,7 @@ const getNameChannel = (idChannel) => {
   url += idChannel;
   const options = {
     method: "POST",
-    headers: { Authorization: `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}` },
+    headers: {Authorization: `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}`},
     data: {
       channel: idChannel,
     },
@@ -182,7 +182,7 @@ const saveChannelAccount = async (idChannel, idAccount) => {
   const result = await ChannelMicrosoftAccount.query()
     .where("id_channel", idChannel)
     .where("id_account", idAccount);
-  if(result.length === 0){
+  if (result.length === 0) {
     return ChannelMicrosoftAccount.query().insert({
       id_channel: idChannel,
       id_account: idAccount,
