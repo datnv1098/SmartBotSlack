@@ -15,8 +15,8 @@ require('moment-precise-range-plugin');
  * @returns {Promise}
  */
 const handlerEditEvent = (payload, template) => {
-  const { eventEditDT, calendars, idCalendar, userInfo } = payload;
-  let editView = {...template.editEvent,blocks: [...template.editEvent.blocks]};
+  const {eventEditDT, calendars, idCalendar, userInfo} = payload;
+  let editView = {...template.editEvent, blocks: [...template.editEvent.blocks]};
   editView.callback_id = `${editView.callback_id}/${eventEditDT.id}`;
   for (let i = 0, length = calendars.length; i < length; i++) {
     const item = calendars[i];
@@ -85,7 +85,13 @@ const handlerEditEvent = (payload, template) => {
   }
   let dateTime = MomentTimezone(eventEditDT.start.dateTime).tz(userInfo.user.tz).format();
   const timeStart = blockTime(dateTime);
-  editView.private_metadata = JSON.stringify({ ...userInfo, dateTime, durationTime: 15, durationDay: durationDay, startTime: timeStart });
+  editView.private_metadata = JSON.stringify({
+    ...userInfo,
+    dateTime,
+    durationTime: 15,
+    durationDay: durationDay,
+    startTime: timeStart
+  });
   return editView;
 };
 
@@ -99,8 +105,7 @@ const handlerOverflowAction = (payload, template) => {
   const value = payload.actions[0].selected_option.value.split('/');
   if (value[0] === "edit") {
     return handlerEditEvent(payload, template);
-  }
-  else if (value[0] === "delete") {
+  } else if (value[0] === "delete") {
     return showDeleteEventView(payload, template);
   }
 }
@@ -331,7 +336,7 @@ function handlerStartDate(payload, blocks) {
  * @returns {string}
  */
 function _getSelectedDate(values, blockId, actionId) {
-  if(!values[blockId]){
+  if (!values[blockId]) {
     return values[`${blockId}-1`][actionId]["selected_date"];
   } else {
     return values[blockId][actionId]["selected_date"];
@@ -346,7 +351,7 @@ function _getSelectedDate(values, blockId, actionId) {
  * @returns {string}
  */
 function _getSelectedOption(values, blockId, actionId) {
-  if(!values[blockId]){
+  if (!values[blockId]) {
     return values[`${blockId}-1`][actionId]["selected_option"].value;
   } else {
     return values[blockId][actionId]["selected_option"].value;
@@ -366,7 +371,7 @@ function handlerEndDate(payload, blocks) {
   const selectedDate = _getSelectedDate(values, "MI_select-date-end", "datepicker-action-end");
   const dateTime = priMetadata.dateTime.split("T")[0];
   let diff = Moment.preciseDiff(dateTime, selectedDate, true);
-  if(diff.firstDateWasLater) {
+  if (diff.firstDateWasLater) {
     if (priMetadata.durationDay) {
       blocks[5].accessory.initial_date = Moment(priMetadata.dateTime)
         .add(priMetadata.durationDay, 'd')
@@ -412,7 +417,7 @@ function handlerStartTime(payload) {
   const datetimeStart = `${date}T${selectedTime}:00${timezone}`;
   const datetimeEnd = `${date}T${timeEnd}:00${timezone}`;
   let diff = Moment.preciseDiff(datetimeStart, datetimeEnd, true);
-  if(diff.firstDateWasLater || selectedTime === timeEnd){
+  if (diff.firstDateWasLater || selectedTime === timeEnd) {
     view.blocks[5].accessory.initial_option = {
       "text": {
         "type": "plain_text",
@@ -430,7 +435,7 @@ function handlerStartTime(payload) {
   }
 
   priMetadata.dateTime = datetimeStart;
-  if(diff.hours > 0) priMetadata.durationTime = diff.hours * 60 + diff.minutes;
+  if (diff.hours > 0) priMetadata.durationTime = diff.hours * 60 + diff.minutes;
   priMetadata.startTime = selectedTime;
   view.private_metadata = JSON.stringify(priMetadata);
   return view;
@@ -454,7 +459,7 @@ function handlerEndTime(payload) {
   const datetimeStart = `${date}T${timeStart}:00${timezone}`;
   const datetimeEnd = `${date}T${selectedTime}:00${timezone}`;
   let diff = Moment.preciseDiff(datetimeStart, datetimeEnd, true);
-  if(diff.firstDateWasLater || selectedTime === timeStart){
+  if (diff.firstDateWasLater || selectedTime === timeStart) {
     let timeEnd = Moment(datetimeStart).add(priMetadata.durationTime, 'm').format();
     timeEnd = blockTime(timeEnd);
     view.blocks[6].accessory.initial_option = {
@@ -473,7 +478,7 @@ function handlerEndTime(payload) {
     return view;
   }
   priMetadata.dateTime = datetimeStart;
-  if(diff.hours > 0) priMetadata.durationTime = diff.hours * 60 + diff.minutes;
+  if (diff.hours > 0) priMetadata.durationTime = diff.hours * 60 + diff.minutes;
   view.private_metadata = JSON.stringify(priMetadata);
   return view;
 }
@@ -486,11 +491,11 @@ function handlerEndTime(payload) {
  */
 function handlerBlocksActions(payload, template) {
   const changePayload = delPropsView(payload);
-  const { action_id } = changePayload.actions[0];
-  const { blocks } = template.addEvent;
+  const {action_id} = changePayload.actions[0];
+  const {blocks} = template.addEvent;
   let option = {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}` },
+    headers: {'Authorization': `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}`},
     url: `${Env.chatServiceGOF("API_URL")}${Env.chatServiceGOF("API_VIEW_UPDATE")}`,
     data: {
       "view_id": payload["container"]["view_id"]
@@ -553,7 +558,7 @@ const submitDelEvent = (payload) => {
   const idEvent = payload.view.private_metadata.split("/")[4];
   const options = {
     method: 'DELETE',
-    headers: { 'X-Microsoft-AccountId': idAccount },
+    headers: {'X-Microsoft-AccountId': idAccount},
     url: `${Env.resourceServerGOF("GRAPH_URL")}${Env.resourceServerGOF("GRAPH_MY_EVENT")}/${idEvent}`
   };
   return options;
@@ -617,7 +622,7 @@ const getRecurrence = (type, datetime) => {
  * @param {string} actionId
  */
 function _getSelectedOption(values, blockId, actionId) {
-  if(!values[blockId]){
+  if (!values[blockId]) {
     return values[`${blockId}-1`][actionId]["selected_option"].value;
   } else {
     return values[blockId][actionId]["selected_option"].value;
@@ -729,7 +734,7 @@ const sendMessageLogin = (event, template, setUidToken) => {
       Env.chatServiceGet("API_URL") +
       Env.chatServiceGet("API_POST_MESSAGE"),
   };
-  const { channel, inviter } = event;
+  const {channel, inviter} = event;
   options.data.blocks[2].elements[1].url = redirectMicrosoft(
     channel,
     inviter,
@@ -753,13 +758,13 @@ const handlerSettingsMessage = (viewSystemSetting, body, setUidToken) => {
     };
     const options = {
       method: "POST",
-      headers: { Authorization: `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}` },
+      headers: {Authorization: `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}`},
       data: data,
       url:
         Env.chatServiceGet("API_URL") +
         Env.chatServiceGet("API_VIEW_OPEN"),
     };
-    const { channel_id, user_id } = body;
+    const {channel_id, user_id} = body;
     options.data.view.blocks[3].elements[1].url = redirectMicrosoft(
       channel_id,
       user_id,
@@ -797,7 +802,7 @@ function delPropsView(payload) {
  * @returns {Promise}
  */
 const configShowEvents = (body, template) => {
-  const { channel_id, events, idAccount, idCalendar } = body;
+  const {channel_id, events, idAccount, idCalendar} = body;
   const blocksView = [...template.listEvent.blocks];
   const event = events.data.value[0];
   blocksView[1].block_id = `MI_${idAccount}/${idCalendar}/${event.subject}`;

@@ -104,7 +104,7 @@ const handlerItemCalendar = (type, calendar, watch) => {
       "type": "mrkdwn",
       "text": `Calendar: *${calendar.name}* - ${watch ? "\`Watching\`" : "\`Not watch\`"}`
     },
-    accessory:  {
+    accessory: {
       "type": "overflow",
       "action_id": `${type}_setting-calendar|${calendar.id}`,
       options: [{...option}]
@@ -138,7 +138,7 @@ const handlerViewSetting = (type, account) => {
   const {calendar} = account;
   const acc = handlerAccount(type, account);
   const result = [acc];
-  for(let i = 0, length = calendar.length; i < length; i++){
+  for (let i = 0, length = calendar.length; i < length; i++) {
     const cal = handlerItemCalendar(type, calendar[i], calendar[i].watch[0].watch);
     result.push(cal)
   }
@@ -156,12 +156,12 @@ const configViewSetting = (setUidToken, template, idChannel, google, microsoft) 
   view.blocks[2].elements[1] = configButtonLogin(setUidToken, idChannel, "MI");
   // view.blocks.splice(5, 1);
 
-  for (let i = 0, length = microsoft.length; i < length; i++){
+  for (let i = 0, length = microsoft.length; i < length; i++) {
     const block = handlerViewSetting("MI", microsoft[i]);
     view.blocks.splice(2, 0, ...block);
   }
 
-  for (let i = 0, length = google.length; i < length; i++){
+  for (let i = 0, length = google.length; i < length; i++) {
     const block = handlerViewSetting("GO", google[i]);
     view.blocks.splice(2, 0, ...block);
   }
@@ -188,32 +188,32 @@ const _builderChannelCalendar = (service) => {
 
 const queryChannelGoogleCalendar = (idChannel) => {
   return Channel.query()
-      .findById(idChannel)
-      .withGraphFetched(_builderChannelCalendar("google"))
-      .modifiers({
-        whereAccount(builder) {
-          builder.select('id', "mail");
-        },
-        whereChannel(builder) {
-          builder.select('watch');
-          builder.findOne("id_channel", idChannel);
-        }
-      });
+    .findById(idChannel)
+    .withGraphFetched(_builderChannelCalendar("google"))
+    .modifiers({
+      whereAccount(builder) {
+        builder.select('id', "mail");
+      },
+      whereChannel(builder) {
+        builder.select('watch');
+        builder.findOne("id_channel", idChannel);
+      }
+    });
 };
 
 const queryChannelMicrosoftCalendar = (idChannel) => {
   return Channel.query()
-      .findById(idChannel)
-      .withGraphFetched(_builderChannelCalendar("microsoft"))
-      .modifiers({
-        whereAccount(builder) {
-          builder.select('id', "mail");
-        },
-        whereChannel(builder) {
-          builder.select('watch');
-          builder.findOne("id_channel", idChannel);
-        }
-      });
+    .findById(idChannel)
+    .withGraphFetched(_builderChannelCalendar("microsoft"))
+    .modifiers({
+      whereAccount(builder) {
+        builder.select('id', "mail");
+      },
+      whereChannel(builder) {
+        builder.select('watch');
+        builder.findOne("id_channel", idChannel);
+      }
+    });
 };
 
 module.exports = {

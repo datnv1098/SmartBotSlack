@@ -41,7 +41,7 @@ const handlerData = (type, channels, event, view) => {
   let description = "";
   if (event.bodyPreview) description = `\nDescription: ${event.bodyPreview}`;
   blocks[3].text.text = location + description;
-  if (!event.bodyPreview && event.locations.length  === 0) blocks.splice(3, 1);
+  if (!event.bodyPreview && event.locations.length === 0) blocks.splice(3, 1);
   const datetimeStart = moment(event.start.dateTime).utc(true).utcOffset(event.timezone);
   const datetimeEnd = moment(event.end.dateTime).utc(true).utcOffset(event.timezone);
   if (event.isAllDay) {
@@ -57,7 +57,7 @@ const handlerData = (type, channels, event, view) => {
   }
 
   const day = getDurationDay(datetimeStart.format(), datetimeEnd.format());
-  if(day){
+  if (day) {
     blocks[2].fields[0].text = `Day Start: ${datetimeStart.format("YYYY-MM-DD")}\n`;
     blocks[2].fields[0].text += `Time: ${datetimeStart.format("HH:mm")}`;
     blocks[2].fields[1].text = `Day end: ${datetimeEnd.format("YYYY-MM-DD")}\n`;

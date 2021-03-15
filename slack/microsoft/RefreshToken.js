@@ -39,7 +39,7 @@ const createAccessToken = async (idAccount) => {
 
   const options = {
     method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
+    headers: {"content-type": "application/x-www-form-urlencoded"},
     data: qs.stringify(data),
     url:
       Env.resourceServerGet("API_URL_AUTH") +
@@ -56,7 +56,7 @@ const createAccessToken = async (idAccount) => {
  */
 const updateRefresh = (idAccount, refreshToken) => {
   return MicrosoftAccount.query()
-    .patch({ refresh_token: refreshToken })
+    .patch({refresh_token: refreshToken})
     .findById(idAccount);
 }
 

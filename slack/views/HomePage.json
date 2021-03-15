@@ -1,111 +1,111 @@
 {
-	"type": "home",
-	"blocks": [
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "*:wave: Today*"
-			}
-		},
-		{
-			"type": "actions",
-			"elements": [
-				{
-					"type": "button",
-					"text": {
-						"type": "plain_text",
-						"text": "Today"
-					},
-					"style": "primary",
-					"action_id": "btnToday"
-				},
-				{
-					"type": "button",
-					"text": {
-						"type": "plain_text",
-						"text": "Tomorrow"
-					},
-					"action_id": "btnTomorrow"
-				},
-				{
-					"type": "datepicker",
-					"initial_date": "1990-04-28",
-					"placeholder": {
-						"type": "plain_text",
-						"text": "Select a date",
-						"emoji": true
-					},
-					"action_id": "datepickerAction"
-				},
-				{
-					"type": "button",
-					"text": {
-						"type": "plain_text",
-						"text": "Create event"
-					},
-					"action_id": "btnEventAdd"
-				},
-				{
-					"type": "button",
-					"text": {
-						"type": "plain_text",
-						"text": "Setting"
-					},
-					"action_id": "btnSettings"
-				}
-			]
-		},
-		{
-			"type": "header",
-			"text": {
-				"type": "plain_text",
-				"text": "List event",
-				"emoji": true
-			}
-		},
-		{
-			"type": "section",
-			"fields": [
-				{
-					"type": "mrkdwn",
-					"text": "*Triển Khai dự án mới*"
-				},
-				{
-					"type": "mrkdwn",
-					"text": "1:00PM-2:00PM"
-				},
-				{
-					"type": "mrkdwn",
-					"text": "_phòng họp số 1_"
-				},
-				{
-					"type": "mrkdwn",
-					"text": "27-02-2021"
-				}
-			],
-			"accessory": {
-				"type": "overflow",
-				"options": [
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "View event",
-							"emoji": true
-						},
-						"value": "value-0"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "Delete event",
-							"emoji": true
-						},
-						"value": "value-1"
-					}
-				],
-				"action_id": "overflow-action"
-			}
-		}
-	]
+  "type": "home",
+  "blocks": [
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*:wave: Today*"
+      }
+    },
+    {
+      "type": "actions",
+      "elements": [
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "Today"
+          },
+          "style": "primary",
+          "action_id": "btnToday"
+        },
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "Tomorrow"
+          },
+          "action_id": "btnTomorrow"
+        },
+        {
+          "type": "datepicker",
+          "initial_date": "1990-04-28",
+          "placeholder": {
+            "type": "plain_text",
+            "text": "Select a date",
+            "emoji": true
+          },
+          "action_id": "datepickerAction"
+        },
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "Create event"
+          },
+          "action_id": "btnEventAdd"
+        },
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "Setting"
+          },
+          "action_id": "btnSettings"
+        }
+      ]
+    },
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "List event",
+        "emoji": true
+      }
+    },
+    {
+      "type": "section",
+      "fields": [
+        {
+          "type": "mrkdwn",
+          "text": "*Triển Khai dự án mới*"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "1:00PM-2:00PM"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "_phòng họp số 1_"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "27-02-2021"
+        }
+      ],
+      "accessory": {
+        "type": "overflow",
+        "options": [
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "View event",
+              "emoji": true
+            },
+            "value": "value-0"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "Delete event",
+              "emoji": true
+            },
+            "value": "value-1"
+          }
+        ],
+        "action_id": "overflow-action"
+      }
+    }
+  ]
 }

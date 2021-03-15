@@ -1,5 +1,5 @@
 const BaseServer = require('../../common/BaseServer');
-const { createProxyMiddleware } = require('http-proxy-middleware');
+const {createProxyMiddleware} = require('http-proxy-middleware');
 const Axios = require('axios');
 const Template = require("../views/Template");
 const Env = require("../../utils/Env");
@@ -108,7 +108,7 @@ class SlackWrapper extends BaseServer {
 
     const option = {
       method: "POST",
-      headers: { Authorization: `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}` },
+      headers: {Authorization: `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}`},
       data: {
         trigger_id: body.trigger_id,
         view,
@@ -121,7 +121,7 @@ class SlackWrapper extends BaseServer {
     return option
   }
 
-  handlerShowEvents(body){
+  handlerShowEvents(body) {
     // console.log("handlerShowEvents body: ", body);
     return null
   }
@@ -141,8 +141,10 @@ class SlackWrapper extends BaseServer {
           option = null;
           break;
       }
-      if(option) await Axios(option)
-        .then(({data}) => {if (!data.ok) throw data});
+      if (option) await Axios(option)
+        .then(({data}) => {
+          if (!data.ok) throw data
+        });
       return res.status(200).send("OK");
     } catch (e) {
       console.log("⇒⇒⇒ Handler Command ERROR: ", e);
@@ -153,12 +155,12 @@ class SlackWrapper extends BaseServer {
   getDataServer(actions) {
     const list = Env.serverGOF("LIST");
     let param = "block_id";
-    if(/^WR_/.test(actions[0].block_id)) param = "action_id";
+    if (/^WR_/.test(actions[0].block_id)) param = "action_id";
     for (let i = 0, length = list.length; i < length; i++) {
       const {prefix} = list[i];
       const regex = new RegExp(`^${prefix}_`);
       for (let j = 0, length = actions.length; j < length; j++) {
-        if(regex.test(actions[j][param])) return list[i]
+        if (regex.test(actions[j][param])) return list[i]
       }
     }
   }
@@ -168,9 +170,10 @@ class SlackWrapper extends BaseServer {
     try {
       if (challenge) return res.status(200).send(challenge);
       if (event) return this.handlerEvent(req, res);
-      if (/\/cal/.test(command)) {
-        if(/^go/.test(req.body.text))return this.proxyGO(req, res, next);
-        if(/^mi/.test(req.body.text))return this.proxyMI(req, res, next);
+      const regex = new RegExp(`\/${Env.getOrFail("SLACK_CMD_CALENDAR")}`);
+      if (regex.test(command)) {
+        if (/^go/.test(req.body.text)) return this.proxyGO(req, res, next);
+        if (/^mi/.test(req.body.text)) return this.proxyMI(req, res, next);
         return this.handleCommand(req, res, next);
       }
       if (payload) {
@@ -220,12 +223,12 @@ class SlackWrapper extends BaseServer {
       }
     } catch (e) {
       console.log("⇒⇒⇒ Login Wrapper ERROR: ", e);
-      if(e.code === "TokenExpiredError")return res.status(401).send(e.message);
+      if (e.code === "TokenExpiredError") return res.status(401).send(e.message);
       return res.status(400).send("Bad request");
     }
   }
 
-  pushMessageHandler(req, res, next){
+  pushMessageHandler(req, res, next) {
 
   }
 

@@ -1,40 +1,40 @@
 [
-	{
-		"type": "divider"
-	},
-	{
-		"type": "header",
-		"text": {
-			"type": "plain_text",
-			"text": "System settings calendars",
-			"emoji": true
-		}
-	},
-	{
-		"type": "actions",
-		"elements": [
-			{
-				"type": "button",
-				"text": {
-					"type": "plain_text",
-					"emoji": true,
-					"text": "Login Google"
-				},
-				"style": "primary",
-				"action_id": "GO_addGoogle"
-			},
-			{
-				"type": "button",
-				"text": {
-					"type": "plain_text",
-					"emoji": true,
-					"text": "Login microsoft"
-				},
-				"style": "primary",
-				"action_id": "MI_addMicrosoft"
-			}
-		]
-	},
+  {
+    "type": "divider"
+  },
+  {
+    "type": "header",
+    "text": {
+      "type": "plain_text",
+      "text": "System settings calendars",
+      "emoji": true
+    }
+  },
+  {
+    "type": "actions",
+    "elements": [
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "emoji": true,
+          "text": "Login Google"
+        },
+        "style": "primary",
+        "action_id": "GO_addGoogle"
+      },
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "emoji": true,
+          "text": "Login microsoft"
+        },
+        "style": "primary",
+        "action_id": "MI_addMicrosoft"
+      }
+    ]
+  },
   {
     "type": "divider"
   }

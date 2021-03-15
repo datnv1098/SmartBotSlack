@@ -1,62 +1,62 @@
 [
-	{
-		"type": "section",
-		"text": {
-			"type": "mrkdwn",
-			"text": "*List calendar*"
-		},
-		"accessory": {
-			"type": "radio_buttons",
-			"initial_option": {
-				"value": "value-0",
-				"text": {
-					"type": "plain_text",
-					"text": "Calendar 1"
-				}
-			},
-			"options": [
-				{
-					"text": {
-						"type": "plain_text",
-						"text": "Calendar 1",
-						"emoji": true
-					},
-					"value": "value-0"
-				},
-				{
-					"text": {
-						"type": "plain_text",
-						"text": "Calendar 2",
-						"emoji": true
-					},
-					"value": "value-1"
-				},
-				{
-					"text": {
-						"type": "plain_text",
-						"text": "Calendar 3",
-						"emoji": true
-					},
-					"value": "value-2"
-				}
-			],
-			"action_id": "radio_buttons-action"
-		}
-	},
-	{
-		"type": "actions",
-		"elements": [
-			{
-				"type": "button",
-				"text": {
-					"type": "plain_text",
-					"emoji": true,
-					"text": "Show Calendar"
-				},
-				"style": "primary",
-				"value": "buttonSubmit",
-				"action_id": "buttonSubmit"
-			}
-		]
-	}
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "*List calendar*"
+    },
+    "accessory": {
+      "type": "radio_buttons",
+      "initial_option": {
+        "value": "value-0",
+        "text": {
+          "type": "plain_text",
+          "text": "Calendar 1"
+        }
+      },
+      "options": [
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "Calendar 1",
+            "emoji": true
+          },
+          "value": "value-0"
+        },
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "Calendar 2",
+            "emoji": true
+          },
+          "value": "value-1"
+        },
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "Calendar 3",
+            "emoji": true
+          },
+          "value": "value-2"
+        }
+      ],
+      "action_id": "radio_buttons-action"
+    }
+  },
+  {
+    "type": "actions",
+    "elements": [
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "emoji": true,
+          "text": "Show Calendar"
+        },
+        "style": "primary",
+        "value": "buttonSubmit",
+        "action_id": "buttonSubmit"
+      }
+    ]
+  }
 ]

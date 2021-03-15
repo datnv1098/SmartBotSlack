@@ -72,10 +72,10 @@ const makeData = (channels, showEvent, event) => {
   }
   blocks[1].fields[0].text = `*${event.summary}*`;
   blocks[1].fields[1].text = `Calendar: ${event.organizer.email}`;
-  if(event.organizer.displayName){
+  if (event.organizer.displayName) {
     blocks[1].fields[1].text = `Calendar: ${event.organizer.displayName}`;
   }
-  if(event.status === 'cancelled'){
+  if (event.status === 'cancelled') {
     blocks[0].elements[2].text = "*Type: Delete Event*";
     blocks.length = 2;
     blocks.push({"type": "divider"});
