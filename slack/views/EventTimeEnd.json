@@ -1,19 +1,18 @@
 {
-	"block_id": "timeEnd",
-	"type": "section",
-	"text": {
-		"type": "mrkdwn",
-		"text": "Time end event"
-	},
-	"accessory": {
-		"type": "timepicker",
-		"initial_time": "14:00",
-		"placeholder": {
-
-			"type": "plain_text",
-			"text": "Select time",
-			"emoji": true
-		},
-		"action_id": "timepicker-action2"
-	}
+  "block_id": "timeEnd",
+  "type": "section",
+  "text": {
+    "type": "mrkdwn",
+    "text": "Time end event"
+  },
+  "accessory": {
+    "type": "timepicker",
+    "initial_time": "14:00",
+    "placeholder": {
+      "type": "plain_text",
+      "text": "Select time",
+      "emoji": true
+    },
+    "action_id": "timepicker-action2"
+  }
 }

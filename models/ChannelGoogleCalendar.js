@@ -24,7 +24,7 @@ class ChannelGoogleCalendar extends Model {
   }
 
   static get relationMappings() {
-    const Channel = require("./channel");
+    const Channel = require("./Channel");
     const GoogleCalendar = require("./GoogleCalendar");
     return {
       channels: {

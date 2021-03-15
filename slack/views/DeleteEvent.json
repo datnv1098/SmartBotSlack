@@ -1,38 +1,38 @@
 {
-	"type": "modal",
-	"notify_on_close": true,
-	"title": {
-		"type": "plain_text",
-		"text": "BOT NOTI CALENDARS ",
-		"emoji": true
-	},
-	"submit": {
-		"type": "plain_text",
-		"text": "Delete",
-		"emoji": true
-	},
-	"close": {
-		"type": "plain_text",
-		"text": "Close",
-		"emoji": true
-	},
+  "type": "modal",
+  "notify_on_close": true,
+  "title": {
+    "type": "plain_text",
+    "text": "BOT NOTI CALENDARS ",
+    "emoji": true
+  },
+  "submit": {
+    "type": "plain_text",
+    "text": "Delete",
+    "emoji": true
+  },
+  "close": {
+    "type": "plain_text",
+    "text": "Close",
+    "emoji": true
+  },
   "callback_id": "delete-event",
-	"blocks": [
-		{
-			"type": "header",
-			"text": {
-				"type": "plain_text",
-				"text": "Delete event : ",
-				"emoji": true
-			}
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "plain_text",
-				"text": "Event of calendar : ",
-				"emoji": true
-			}
-		}
-	]
+  "blocks": [
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "Delete event : ",
+        "emoji": true
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "plain_text",
+        "text": "Event of calendar : ",
+        "emoji": true
+      }
+    }
+  ]
 }

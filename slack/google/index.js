@@ -1,6 +1,6 @@
 const BaseServer = require("../../common/BaseServer");
 const Env = require("../../utils/Env");
-const Redis = require("../../utils/redis/index");
+const Redis = require("../../utils/redis");
 const Template = require("../views/Template");
 const Channel = require("../../models/Channel");
 const GoogleAccount = require("../../models/GoogleAccount");
@@ -276,6 +276,7 @@ class SlackGoogle extends BaseServer {
       const {text} = req.body;
       let option = null;
       const type = text.trim();
+
       switch (type) {
         case "home":
           option = requestHome(req.body, this.template.homePage);
@@ -396,7 +397,7 @@ class SlackGoogle extends BaseServer {
       let option = null;
       switch (payload.type) {
         case "block_actions":
-          if(payload.actions[0].action_id === "overflow-action"){
+          if (payload.actions[0].action_id === "overflow-action") {
             payload = await this.mixDataPayload(payload)
           }
           option = handlerAction(payload, this.template);
@@ -422,7 +423,8 @@ class SlackGoogle extends BaseServer {
     try {
       if (challenge) return res.status(200).send(challenge);
       if (event) return this.handlerEvent(req, res);
-      if (command && /^\/ca$/.test(command)) return this.handlerCommand(req, res);
+      const regex = new RegExp(`\/${Env.getOrFail("SLACK_CMD_CALENDAR")}`);
+      if (command && regex.test(command)) return this.handlerCommand(req, res);
       if (payload) return this.handlerPayLoad(req, res);
       return res.status(200).send("OK");
     } catch (e) {
@@ -474,7 +476,7 @@ class SlackGoogle extends BaseServer {
 
   async saveChannelsCalendar(item) {
     const result = await ChannelsCalendar.query().findOne(item);
-    if(!result){
+    if (!result) {
       item.watch = true;
       await ChannelsCalendar.query().insert(item)
     }
@@ -482,7 +484,7 @@ class SlackGoogle extends BaseServer {
 
   async saveChannelGoogleCalendar(item) {
     const result = await ChannelGoogleCalendar.query().findOne(item);
-    if(!result){
+    if (!result) {
       item.watch = true;
       await ChannelGoogleCalendar.query().insert(item)
     }
@@ -504,7 +506,7 @@ class SlackGoogle extends BaseServer {
       const profile = await getProfile(tokens.access_token);
       const user = await GoogleAccount.query().findById(profile.sub);
 
-      if (!user){
+      if (!user) {
         await this.setAccessTokenRedis(profile.sub, tokens.access_token);
         await this.handlerUser(profile, tokens);
       }
@@ -549,7 +551,7 @@ class SlackGoogle extends BaseServer {
       const {idAccount, idCalendar} = JSON.parse(decode);
 
       let event = await getEventUpdate(req.headers, idAccount);
-      if(!event) return res.status(204).send("OK");
+      if (!event) return res.status(204).send("OK");
       const eventRedis = await this.getValueRedis(event.id);
       if (eventRedis) {
         const data = JSON.parse(eventRedis);
@@ -579,7 +581,7 @@ class SlackGoogle extends BaseServer {
           Env.chatServiceGet("API_URL") +
           Env.chatServiceGet("API_POST_MESSAGE"),
       };
-      if(data.length > 0)await Promise.all(data.map(value => {
+      if (data.length > 0) await Promise.all(data.map(value => {
         option.data = value;
         return Axios(option)
       }));
