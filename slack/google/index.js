@@ -539,8 +539,7 @@ class SlackGoogle extends BaseServer {
           });
         }
       }
-
-      return res.send("Oke");
+      return res.send("Login Successful !");
     } catch (e) {
       console.log("⇒⇒⇒ Auth Google ERROR: ", e);
       return res.status(400).send("ERROR");

@@ -12,6 +12,7 @@ const Env = require('../utils/Env');
 const Redis = require('../utils/redis');
 const Mongo = require('../utils/mongo');
 const LogModel = require('../models/mongo/LogModel');
+const MongodbConnect = require('../models/mongo/MongodbConnect');
 
 class BaseServer {
   /**
@@ -325,7 +326,7 @@ class BaseServer {
       const logModel = LogModel(mongoDB);
       require('../utils/logger')(this.app, this.instanceId, logModel)
     }
-
+    await MongodbConnect();
     await this.configMySQL();
     await this.configRedis();
 
