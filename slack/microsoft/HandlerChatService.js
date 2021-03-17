@@ -52,12 +52,12 @@ const convertBlocksEvents = (body, template) => {
     const event = events[i];
     let item = blockEvent;
     item = JSON.parse(item);
-    item.block_id = `MI_${event.idAccount}/${event.idCalendar}/${event.subject}/${i}`;
-    item.accessory.options[0].value = `edit/${event.id}`;
-    item.accessory.options[1].value = `del/${event.id}`;
+    item.block_id = `MI_${event.idAccount}/${event.id}/${event.subject}/${i}`;
+    item.accessory.options[0].value = `edit/${event.idCalendar}`;
+    item.accessory.options[1].value = `del/${event.idCalendar}`;
     item.fields[0].text = `*${event.subject}*`;
 
-    if (event.location.displayName !== '') {
+    if (event.location && event.location.displayName !== '') {
       item.fields[4].text = `Location: ${event.location.displayName}`;
     }
     const datetimeStart = Moment(event.start.dateTime).utc(true).utcOffset(event.timezone).format("DD-MM-YYYYTHH:mm");
@@ -624,7 +624,7 @@ const showDeleteEventView = (payload, template) => {
  */
 const submitDelEvent = (payload) => {
   const idAccount = payload.view.private_metadata.split("/")[0].split('MI_')[1];
-  const idEvent = payload.view.private_metadata.split("/")[4];
+  const idEvent = payload.view.private_metadata.split("/")[1];
   const options = {
     method: 'DELETE',
     headers: {'X-Microsoft-AccountId': idAccount},
@@ -864,36 +864,6 @@ function delPropsView(payload) {
   return payload;
 }
 
-/**
- * Show all events
- * @param {object} body
- * @param {object} template
- * @returns {Promise}
- */
-const configShowEvents = (body, template) => {
-  const {channel_id, events, idAccount, idCalendar} = body;
-  const blocksView = [...template.listEvent.blocks];
-  const event = events.data.value[0];
-  blocksView[1].block_id = `MI_${idAccount}/${idCalendar}/${event.subject}`;
-  blocksView[1].accessory.options[0].value = `edit/${event.id}`;
-  blocksView[1].accessory.options[1].value = `delete/${event.id}`;
-  blocksView[1].fields[0].text = event.subject;
-  const options = {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}`,
-    },
-    data: {
-      channel: channel_id,
-      blocks: blocksView,
-    },
-    url:
-      Env.chatServiceGet("API_URL") +
-      Env.chatServiceGet("API_POST_MESSAGE"),
-  };
-  return options;
-};
 
 module.exports = {
   handlerSettingsMessage,
@@ -901,7 +871,6 @@ module.exports = {
   configAddEvent,
   submitAddEvent,
   handlerBlocksActions,
-  configShowEvents,
   submitDelEvent,
   getEventsTodays,
   convertBlocksEvents

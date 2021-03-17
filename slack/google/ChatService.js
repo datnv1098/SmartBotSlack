@@ -249,43 +249,6 @@ const configAddEvent = (body, template) => {
   return option
 };
 
-
-/**
- *
- * @param {object}body
- * @param {object}template
- * @returns {Promise}
- */
-const configShowEvent = (body, template) => {
-  const {event, idAccount, idCalendar, channel_id} = body
-  const blocksView = [...template.listEvent.blocks];
-
-  blocksView[1].block_id = `GO_${idAccount}/${idCalendar}`;
-  blocksView[1].accessory.options[0].value = `edit/${event.id}`;
-  blocksView[1].accessory.options[1].value = `delete/${event.id}`;
-  blocksView[1].fields[0].text = event.summary;
-  if (event.start.date && event.end.date) {
-    blocksView[1].fields[1].text = event.start.date
-    blocksView[1].fields[3].text = event.end.date
-  } else {
-    blocksView[1].fields[3].text = event.start.dateTime.split('T')[0];
-  }
-  const option = {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}`,
-    },
-    data: {
-      channel: channel_id,
-      blocks: blocksView,
-    },
-    url:
-      Env.chatServiceGet("API_URL") +
-      Env.chatServiceGet("API_POST_MESSAGE"),
-  };
-  return option
-}
 /**
  * xử lý action All đây
  * @param {object} payload
@@ -863,7 +826,6 @@ module.exports = {
   requestHome,
   requestButtonSettings,
   configAddEvent,
-  configShowEvent,
   createEvent,
   updateEvent,
   deleteEvent,

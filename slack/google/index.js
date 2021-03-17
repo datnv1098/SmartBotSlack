@@ -30,7 +30,6 @@ const {
   requestSettings,
   requestHome,
   configAddEvent,
-  configShowEvent,
   createEvent,
   updateEvent,
   deleteEvent,
@@ -146,23 +145,6 @@ class SlackGoogle extends BaseServer {
     return configAddEvent(body, this.template)
   }
 
-  async handlerShowEvents(body) {
-    const {channel_id = null} = body;
-    const channelCalendar = await ChannelsCalendar.query().findOne({id_channel: channel_id});
-    const idCalendar = channelCalendar.id_calendar.replace(/^GO_/, "");
-    const idCalendars = await GoogleAccountCalendar.query().findOne({id_calendar: idCalendar});
-    body.idAccount = idCalendars.id_account;
-    const options = {
-      method: 'GET',
-      headers: {'X-Google-AccountId': body.idAccount},
-      url: `${Env.resourceServerGOF("API_URL")}${Env.resourceServerGOF("API_CALENDAR")}/${idCalendar}/events`
-    };
-    const events = await Axios(options);
-    if (events.data.items.length === 0) return null;
-    body.event = events.data.items[0];
-    body.idCalendar = idCalendar;
-    return configShowEvent(body, this.template)
-  }
   /**
  *
  * @param {Array} data
@@ -291,10 +273,7 @@ class SlackGoogle extends BaseServer {
         case "go add-event":
           option = await this.handlerAddEvent(req.body);
           break;
-        case "go show-events":
-          option = await this.handlerShowEvents(req.body);
-          break;
-        case "go events-today":
+        case "go event-today":
           option = await this.handlerEventsToday(req.body);
           break;
         default:

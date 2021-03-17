@@ -31,7 +31,6 @@ const {
   configAddEvent,
   handlerBlocksActions,
   submitAddEvent,
-  configShowEvents,
   submitDelEvent,
   getEventsTodays,
   convertBlocksEvents
@@ -111,25 +110,6 @@ class SlackMicrosoft extends BaseServer {
     return options;
   }
 
-  /**
-   * Xử lý sự kện add event
-   * @param {object} body
-   * @return {Promise<{object}>}
-   */
-  async handlerShowEvents(body) {
-    const { channel_id = null } = body;
-    const channelCalendar = await ChannelsCalendar.query().findOne({ id_channel: channel_id });
-    const idCalendar = channelCalendar.id_calendar.replace(/^MI_/, "");
-    const accountCalendar = await MicrosoftAccountCalendar.query().findOne({ id_calendar: idCalendar });
-    const idAccount = accountCalendar.id_account;
-    const option = this.getEventsInCalendar(idAccount, idCalendar);
-    const { data } = await Axios(option);
-    if (data.value.length === 0) return null;
-    body.events = data.value;
-    body.idAccount = idAccount;
-    body.idCalendar = idCalendar;
-    return configShowEvents(body, this.template)
-  }
   /**
  *
  * @param {Array} data
@@ -254,10 +234,7 @@ class SlackMicrosoft extends BaseServer {
         case "mi add-event":
           option = await this.handlerAddEvent(req.body);
           break;
-        case "mi show-events":
-          option = await this.handlerShowEvents(req.body);
-          break;
-        case "mi events-today":
+        case "mi event-today":
           option = await this.handlerEventsToday(req.body);
           break;
         default:
@@ -391,18 +368,18 @@ class SlackMicrosoft extends BaseServer {
     const blockId = payload.actions[0].block_id.split('/');
     const values = payload.actions[0].selected_option.value.split('/');
     if (values[0] === "edit") {
-      const event = await getEvent(blockId[0].split('MI_')[1], values[1]);
+      const event = await getEvent(blockId[0].split('MI_')[1], blockId[1]);
       const chanCals = await ChannelsCalendar.query().where({ id_channel: payload.channel.id });
       const calendars = await this.getOptionCalendars(chanCals);
       payload.calendars = calendars.filter(function (el) {
         return el != null;
       });
-      payload.idCalendar = blockId[1];
+      payload.idCalendar = values[1];
       payload.eventEditDT = event.data;
       const user_id = payload.user.id;
       payload.userInfo = await this.getUserInfo(user_id);
     } else if (values[0] === "del") {
-      payload.calendar = await MicrosoftCalendar.query().findById(blockId[1]);
+      payload.calendar = await MicrosoftCalendar.query().findById(values[1]);
     }
     return payload
   }
