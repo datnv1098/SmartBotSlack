@@ -156,10 +156,8 @@ class SlackGoogle extends BaseServer {
   convertEventsData = (events, account, calendar) => {
     const data = [];
     const values = events.data.items;
-    console.log(events);
     if (values.length > 0) {
       values.forEach(item => {
-        console.log("Item :", item);
         const event = _.pick(item, ['id', 'summary', 'start', 'end', 'location']);
         event.nameCalendar = calendar.name;
         event.idCalendar = calendar.id;
@@ -261,11 +259,9 @@ class SlackGoogle extends BaseServer {
         if (account.calendar.length === 0) continue;
         for (let j = 0; j < account.calendar.length; j++) {
           const calendar = account.calendar[j];
-          console.log(`1: EVENT-TODAY_${this.instanceId}_${calendar.id}`);
           let eventRedis = await this.getValueRedis(`EVENT-TODAY_${calendar.id}`);
           if (eventRedis) {
             eventRedis = JSON.parse(eventRedis);
-            console.log("eventRedis :", eventRedis);
             if (eventRedis.length <= 0) continue;
             events = this.sortAndSetData(events, eventRedis, calendar.id, exp);
             continue;

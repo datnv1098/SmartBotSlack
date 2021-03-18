@@ -121,10 +121,8 @@ class SlackMicrosoft extends BaseServer {
   convertEventsData = (events, account, calendar) => {
     const data = [];
     const values = events.data.value;
-    console.log(events);
     if (values.length > 0) {
       values.forEach(item => {
-        console.log("Item :", item);
         const event = _.pick(item, ['id', 'subject', 'start', 'end', 'location', 'recurrence', 'isAllDay']);
         event.nameCalendar = calendar.name;
         event.idCalendar = calendar.id;
@@ -218,8 +216,6 @@ class SlackMicrosoft extends BaseServer {
       hours = - parseInt(hours);
       const start = MomentTimezone(`${dateToday}T00:00:00Z`).utc(false).add(hours, "h").format();
       const end = MomentTimezone(`${dateToday}T23:59:59Z`).utc(false).add(hours, "h").format();
-
-      // HAHAHAHA
       for (let i = 0; i < data.account.length; i++) {
         const account = data.account[i];
         if (account.calendar.length === 0) continue;
