@@ -1,12 +1,12 @@
 {
   "server": {
     "PORT": 5001,
-    "URL_PUBLIC": "https://376160069adb.ngrok.io/dev-slack-0001/public"
+    "URL_PUBLIC": "https://c79575b303e1.ngrok.io/public"
   },
   "resourceServer": {
     "CLIENT_SECRET": "n1j1eIb0CHFjPiiTAGqo8E7D",
     "CLIENT_ID": "90881321712-8iib32ro3d46016qtor1ejg3p91mqhbu.apps.googleusercontent.com",
-    "REDIRECT_URI": "http://localhost:5000/dev-slack-0001/auth/google",
+    "REDIRECT_URI": "http://localhost:5001/auth/google",
     "SCOPE_CALENDAR": "email https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.settings.readonly",
     "SCOPE_USER_INFO": "https://www.googleapis.com/auth/userinfo.profile",
     "RESPONSE_TYPE": "code",

@@ -3,39 +3,27 @@ const Crypto = require("../../utils/Crypto");
 const Env = require("../../utils/Env");
 const MomentTimezone = require('moment-timezone');
 const Moment = require('moment');
-const {blockTime, getDurationDay} = require('../../utils/ConvertTime');
-const {v4: uuidv4} = require('uuid');
+const { blockTime, getDurationDay } = require('../../utils/ConvertTime');
+const { v4: uuidv4 } = require('uuid');
 require('moment-precise-range-plugin');
 
 /**
  * get Events Todays
- * @param {Object} body
+ * @param {idCalendar} idCalendar
  * return events
  */
-const getEventsTodays = (body) => {
-  const { datas, userInfo } = body;
-  const options = [];
-  const dateToday = Moment(new Date()).utc(true).utcOffset(userInfo.user.tz).format("YYYY-MM-DD");
-  let hours = MomentTimezone(new Date()).format("Z");
-  hours = - parseInt(hours);
-  let start = MomentTimezone(`${dateToday}T00:00:00Z`).utc(false).add(hours, "h").format();
-  let end = MomentTimezone(`${dateToday}T23:59:59Z`).utc(false).add(hours, "h").format();
-
-  for (let i = 0; i < datas.calendar.length; i++) {
-    const item = datas.calendar[i];
-    const option = {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Microsoft-AccountId": datas.id,
-      },
-      url: Env.resourceServerGOF("GRAPH_URL") +
-        Env.resourceServerGOF("GRAPH_CALENDARS") +
-        `/${item.id}/calendarView/delta?startdatetime=${start}&enddatetime=${end}`
-    };
-    options.push(option);
-  }
-  return Promise.all(options.map(item => Axios(item)));
+const getEventsTodays = (account, j, start, end) => {
+  const option = {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Microsoft-AccountId": account.id,
+    },
+    url: Env.resourceServerGOF("GRAPH_URL") +
+      Env.resourceServerGOF("GRAPH_CALENDARS") +
+      `/${account.calendar[j].id}/calendarView/delta?startdatetime=${start}&enddatetime=${end}`
+  };
+  return Axios(option);
 }
 /**
  * convert Blocks Events
@@ -76,6 +64,7 @@ const convertBlocksEvents = (body, template) => {
   return blocks;
 }
 
+
 /**
  * Show modals view edit event to slack
  * @param {Object} payload
@@ -84,8 +73,8 @@ const convertBlocksEvents = (body, template) => {
  * @returns {Promise}
  */
 const handlerEditEvent = (payload, template) => {
-  const {eventEditDT, calendars, idCalendar, userInfo} = payload;
-  let editView = {...template.editEvent, blocks: [...template.editEvent.blocks]};
+  const { eventEditDT, calendars, idCalendar, userInfo } = payload;
+  let editView = { ...template.editEvent, blocks: [...template.editEvent.blocks] };
   editView.callback_id = `${editView.callback_id}/${eventEditDT.id}`;
   for (let i = 0, length = calendars.length; i < length; i++) {
     const item = calendars[i];
@@ -251,7 +240,7 @@ const repeatInitOption = (type) => {
  * @returns {Promise}
  */
 const configAddEvent = async (body, template) => {
-  const {trigger_id, calendars, userInfo} = body;
+  const { trigger_id, calendars, userInfo } = body;
   const view = {
     ...template.addEvent,
     blocks: [...template.addEvent.blocks]
@@ -299,14 +288,14 @@ const configAddEvent = async (body, template) => {
   };
 
   // lưu dữ liệu cache vào view phục vụ cho update view về sau
-  view.private_metadata = JSON.stringify({...userInfo, dateTime, durationTime: 15, startTime});
+  view.private_metadata = JSON.stringify({ ...userInfo, dateTime, durationTime: 15, startTime });
   view.blocks.splice(5, 1);
 
   // khởi tạo option cho request tới slack.
-  let option = {method: "POST"};
+  let option = { method: "POST" };
   option.url = Env.chatServiceGOF('API_URL');
   option.url += Env.chatServiceGOF('API_VIEW_OPEN');
-  option.headers = {'Authorization': `Bearer ${Env.chatServiceGet("BOT_TOKEN")}`};
+  option.headers = { 'Authorization': `Bearer ${Env.chatServiceGet("BOT_TOKEN")}` };
   option.data = {
     "trigger_id": trigger_id,
     view
@@ -322,9 +311,9 @@ const configAddEvent = async (body, template) => {
  * @returns {object}
  */
 const handlerAllDay = (payload, blocks) => {
-  const {selected_options} = payload.actions[0];
-  const {view} = payload;
-  const {durationDay, dateTime, durationTime} = JSON.parse(view.private_metadata);
+  const { selected_options } = payload.actions[0];
+  const { view } = payload;
+  const { durationDay, dateTime, durationTime } = JSON.parse(view.private_metadata);
 
   // All day checked
   if (selected_options.length > 0) {
@@ -341,7 +330,7 @@ const handlerAllDay = (payload, blocks) => {
 
   // event one-date
   const startTime = blockTime(dateTime);
-  const timeStart = {...blocks[6]};
+  const timeStart = { ...blocks[6] };
   timeStart.accessory.initial_option = {
     "text": {
       "type": "plain_text",
@@ -351,7 +340,7 @@ const handlerAllDay = (payload, blocks) => {
     "value": startTime
   };
   const endTime = blockTime(Moment(dateTime).add(durationTime, 'm').format());
-  const timeEnd = {...blocks[7]};
+  const timeEnd = { ...blocks[7] };
   timeEnd.accessory.initial_option = {
     "text": {
       "type": "plain_text",
@@ -372,8 +361,8 @@ const handlerAllDay = (payload, blocks) => {
  * @returns {object}
  */
 function handlerStartDate(payload, blocks) {
-  const {view} = payload;
-  const {values} = view.state;
+  const { view } = payload;
+  const { values } = view.state;
   const priMetadata = JSON.parse(view.private_metadata);
   const selectedDate = values["MI_select-date-start"]["datepicker-action-start"]["selected_date"];
   const timezone = Moment(priMetadata.dateTime).format("Z");
@@ -405,7 +394,7 @@ function handlerStartDate(payload, blocks) {
  * @returns {string}
  */
 function _getSelectedDate(values, blockId, actionId) {
-  if(!values[blockId]){
+  if (!values[blockId]) {
     return values[`${blockId}-1`][actionId]["selected_date"];
   } else {
     return values[blockId][actionId]["selected_date"];
@@ -420,7 +409,7 @@ function _getSelectedDate(values, blockId, actionId) {
  * @returns {string}
  */
 function _getSelectedOption(values, blockId, actionId) {
-  if(!values[blockId]){
+  if (!values[blockId]) {
     return values[`${blockId}-1`][actionId]["selected_option"].value;
   } else {
     return values[blockId][actionId]["selected_option"].value;
@@ -434,13 +423,13 @@ function _getSelectedOption(values, blockId, actionId) {
  * @returns {object}
  */
 function handlerEndDate(payload, blocks) {
-  const {view} = payload;
-  const {values} = view.state;
+  const { view } = payload;
+  const { values } = view.state;
   const priMetadata = JSON.parse(view.private_metadata);
   const selectedDate = _getSelectedDate(values, "MI_select-date-end", "datepicker-action-end");
   const dateTime = priMetadata.dateTime.split("T")[0];
   let diff = Moment.preciseDiff(dateTime, selectedDate, true);
-  if(diff.firstDateWasLater) {
+  if (diff.firstDateWasLater) {
     if (priMetadata.durationDay) {
       blocks[5].accessory.initial_date = Moment(priMetadata.dateTime)
         .add(priMetadata.durationDay, 'd')
@@ -474,8 +463,8 @@ function handlerEndDate(payload, blocks) {
  * @returns {object}
  */
 function handlerStartTime(payload) {
-  const {view} = payload;
-  const {values} = view.state;
+  const { view } = payload;
+  const { values } = view.state;
   const priMetadata = JSON.parse(view.private_metadata);
 
   const selectedTime = _getSelectedOption(values, "MI_select-time-start", "time-start-action");
@@ -516,8 +505,8 @@ function handlerStartTime(payload) {
  * @returns {object}
  */
 function handlerEndTime(payload) {
-  const {view} = payload;
-  const {values} = view.state;
+  const { view } = payload;
+  const { values } = view.state;
   const priMetadata = JSON.parse(view.private_metadata);
 
   const selectedTime = _getSelectedOption(values, "MI_select-time-end", "time-end-action");
@@ -560,11 +549,11 @@ function handlerEndTime(payload) {
  */
 function handlerBlocksActions(payload, template) {
   const changePayload = delPropsView(payload);
-  const {action_id} = changePayload.actions[0];
-  const {blocks} = template.addEvent;
+  const { action_id } = changePayload.actions[0];
+  const { blocks } = template.addEvent;
   let option = {
     method: 'POST',
-    headers: {'Authorization': `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}`},
+    headers: { 'Authorization': `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}` },
     url: `${Env.chatServiceGOF("API_URL")}${Env.chatServiceGOF("API_VIEW_UPDATE")}`,
     data: {
       "view_id": payload["container"]["view_id"]
@@ -627,7 +616,7 @@ const submitDelEvent = (payload) => {
   const idEvent = payload.view.private_metadata.split("/")[1];
   const options = {
     method: 'DELETE',
-    headers: {'X-Microsoft-AccountId': idAccount},
+    headers: { 'X-Microsoft-AccountId': idAccount },
     url: `${Env.resourceServerGOF("GRAPH_URL")}${Env.resourceServerGOF("GRAPH_MY_EVENT")}/${idEvent}`
   };
   return options;
@@ -803,7 +792,7 @@ const sendMessageLogin = (event, template, setUidToken) => {
       Env.chatServiceGet("API_URL") +
       Env.chatServiceGet("API_POST_MESSAGE"),
   };
-  const {channel, inviter} = event;
+  const { channel, inviter } = event;
   options.data.blocks[2].elements[1].url = redirectMicrosoft(
     channel,
     inviter,
@@ -827,13 +816,13 @@ const handlerSettingsMessage = (viewSystemSetting, body, setUidToken) => {
     };
     const options = {
       method: "POST",
-      headers: {Authorization: `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}`},
+      headers: { Authorization: `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}` },
       data: data,
       url:
         Env.chatServiceGet("API_URL") +
         Env.chatServiceGet("API_VIEW_OPEN"),
     };
-    const {channel_id, user_id} = body;
+    const { channel_id, user_id } = body;
     options.data.view.blocks[3].elements[1].url = redirectMicrosoft(
       channel_id,
       user_id,

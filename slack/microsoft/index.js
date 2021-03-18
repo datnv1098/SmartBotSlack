@@ -12,6 +12,7 @@ const MicrosoftAccount = require("../../models/MicrosoftAccount");
 const Channel = require("../../models/Channel");
 const _ = require('lodash');
 const Moment = require('moment');
+const MomentTimezone = require('moment-timezone');
 
 const {
   getToken,
@@ -117,22 +118,22 @@ class SlackMicrosoft extends BaseServer {
  * @param {object} account
  * @returns {Array}
  */
-  convertEventsData = (data, calendars, account) => {
-    const events = [];
-    for (let i = 0; i < data.length; i++) {
-      const values = data[i].data.value;
-      if (values.length > 0) {
-        values.forEach(item => {
-          const event = _.pick(item, ['id', 'subject', 'start', 'end', 'location', 'recurrence', 'isAllDay']);
-          event.nameCalendar = calendars[i].name;
-          event.idCalendar = calendars[i].id;
-          event.idAccount = account.id;
-          event.timezone = account.timezone;
-          events.push(event);
-        });
-      }
+  convertEventsData = (events, account, calendar) => {
+    const data = [];
+    const values = events.data.value;
+    console.log(events);
+    if (values.length > 0) {
+      values.forEach(item => {
+        console.log("Item :", item);
+        const event = _.pick(item, ['id', 'subject', 'start', 'end', 'location', 'recurrence', 'isAllDay']);
+        event.nameCalendar = calendar.name;
+        event.idCalendar = calendar.id;
+        event.idAccount = account.id;
+        event.timezone = account.timezone;
+        data.push(event);
+      });
     }
-    return events;
+    return data;
   }
   /**
    * builder Get Account And Calendar
@@ -159,6 +160,30 @@ class SlackMicrosoft extends BaseServer {
         },
       });
   }
+
+  /**
+   * Sort array
+   * @param {Array} array
+   * @returns {Array}
+   */
+  sortTimeStart(array) {
+    return array.sort(function (a, b) {
+      return (new Date(a.start.dateTime)) - (new Date(b.start.dateTime));
+    });
+  }
+  /**
+   * sort And Set Data
+   * @param {Array} events
+   * @param {Array} eventRedis
+   * @param {string} idCalendar
+   * @param {number} exp
+   */
+  sortAndSetData(events, eventRedis, idCalendar, exp) {
+    events = [...events, ...eventRedis];
+    events = this.sortTimeStart(events);
+    this.setValueRedis(`EVENT-TODAY_${idCalendar}`, JSON.stringify(eventRedis), exp);
+    return events;
+  }
   /**
    * Xử lý sự kện show Events Today
    * @param {object} body
@@ -181,24 +206,39 @@ class SlackMicrosoft extends BaseServer {
     };
     try {
       let events = null;
-      events = await this.getValueRedis(channel_id);
       body.userInfo = await this.getUserInfo(body.user_id);
-      if (!events) {
-        events = [];
-        const data = await this.builderGetAccountCalendar(channel_id);
-        for (let i = 0; i < data.account.length; i++) {
-          body.datas = data.account[i];
-          const eventsData = await getEventsTodays(body);
-          const convertData = this.convertEventsData(eventsData, data.account[i].calendar, data.account[i]);
-          events = [...events, ...convertData];
+      events = [];
+      const data = await this.builderGetAccountCalendar(channel_id);
+      let dateTimeNow = Moment(new Date()).utc(true).utcOffset(body.userInfo.user.tz).format();
+      const endToday = new Date(`${dateTimeNow.split("T")[0]}T23:59:59Z`);
+      const dateToday = dateTimeNow.split("T")[0];
+      dateTimeNow = new Date(dateTimeNow);
+      const exp = (endToday - dateTimeNow) / 1000;
+      let hours = MomentTimezone(new Date()).format("Z");
+      hours = - parseInt(hours);
+      const start = MomentTimezone(`${dateToday}T00:00:00Z`).utc(false).add(hours, "h").format();
+      const end = MomentTimezone(`${dateToday}T23:59:59Z`).utc(false).add(hours, "h").format();
+
+      // HAHAHAHA
+      for (let i = 0; i < data.account.length; i++) {
+        const account = data.account[i];
+        if (account.calendar.length === 0) continue;
+        for (let j = 0; j < account.calendar.length; j++) {
+          const calendar = account.calendar[j];
+          console.log(`1: EVENT-TODAY_${this.instanceId}_${calendar.id}`);
+          let eventRedis = await this.getValueRedis(`EVENT-TODAY_${calendar.id}`);
+          if (eventRedis) {
+            eventRedis = JSON.parse(eventRedis);
+            console.log("eventRedis :", eventRedis);
+            if (eventRedis.length <= 0) continue;
+            events = this.sortAndSetData(events, eventRedis, calendar.id, exp);
+            continue;
+          }
+          eventRedis = await getEventsTodays(account, j, start, end);
+          if (eventRedis.data.value.length === 0) continue;
+          eventRedis = this.convertEventsData(eventRedis, account, calendar);
+          events = this.sortAndSetData(events, eventRedis, calendar.id, exp);
         }
-        let dateTimeNow = Moment(new Date()).utc(true).utcOffset(body.userInfo.user.tz).format();
-        const endToday = new Date(`${dateTimeNow.split("T")[0]}T23:59:59Z`);
-        dateTimeNow = new Date(dateTimeNow);
-        const exp = (endToday - dateTimeNow) / 1000;
-        this.setValueRedis(channel_id, JSON.stringify(events), exp);
-      } else {
-        events = JSON.parse(events);
       }
       body.events = events;
       if (events.length === 0) {

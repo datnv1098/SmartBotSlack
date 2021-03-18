@@ -8,34 +8,25 @@ const {v4: uuidv4} = require('uuid');
 require('moment-precise-range-plugin');
 
 /**
- * get Events Todays
- * @param {Object} body
- * return events
+ * get Events Today
+ * @param {Object} account
+ * @param {number} j
+ * @param {date} start
+ * @param {date} end
+ * @returns
  */
-const getEventsTodays = (body) => {
-  const { datas, userInfo } = body;
-  const options = [];
-  const dateToday = Moment(new Date()).utc(true).utcOffset(userInfo.user.tz).format("YYYY-MM-DD");
-  let hours = MomentTimezone(new Date()).format("Z");
-  hours = - parseInt(hours);
-  let start = MomentTimezone(`${dateToday}T00:00:00Z`).utc(false).add(hours, "h").format();
-  let end = MomentTimezone(`${dateToday}T23:59:59Z`).utc(false).add(hours, "h").format();
-
-  for (let i = 0; i < datas.calendar.length; i++) {
-    const item = datas.calendar[i];
+ const getEventsTodays = (account, j, start, end) => {
     const option = {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "X-Google-AccountId": datas.id,
+        "X-Google-AccountId": account.id,
       },
       url: Env.resourceServerGOF("API_URL") +
         Env.resourceServerGOF("API_CALENDAR") +
-        `/${item.id}/events?timeMin=${start}&timeMax=${end}`
+        `/${account.calendar[j].id}/events?timeMin=${start}&timeMax=${end}`
     };
-    options.push(option);
-  }
-  return Promise.all(options.map(item => Axios(item)));
+  return Axios(option);
 }
 /**
  * convert Blocks Events
