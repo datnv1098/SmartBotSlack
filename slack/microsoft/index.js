@@ -1,6 +1,7 @@
 const BaseServer = require("../../common/BaseServer");
 const Env = require("../../utils/Env");
-const {cryptoDecode, decodeJWT} = require("../../utils/Crypto");
+const Redis = require("../../utils/redis");
+const { cryptoDecode, decodeJWT } = require("../../utils/Crypto");
 const Template = require("../views/Template");
 const AxiosConfig = require('./Axios');
 const Axios = require('axios');
@@ -8,7 +9,10 @@ const MicrosoftCalendar = require("../../models/MicrosoftCalendar");
 const ChannelsCalendar = require("../../models/ChannelsCalendar");
 const MicrosoftAccountCalendar = require("../../models/MicrosoftAccountCalendar");
 const MicrosoftAccount = require("../../models/MicrosoftAccount");
+const Channel = require("../../models/Channel");
 const _ = require('lodash');
+const Moment = require('moment');
+const MomentTimezone = require('moment-timezone');
 
 const {
   getToken,
@@ -28,8 +32,9 @@ const {
   configAddEvent,
   handlerBlocksActions,
   submitAddEvent,
-  configShowEvents,
-  submitDelEvent
+  submitDelEvent,
+  getEventsTodays,
+  convertBlocksEvents
 } = require("./HandlerChatService");
 const {
   handlerData,
@@ -49,7 +54,7 @@ class SlackMicrosoft extends BaseServer {
    * @return {Promise<{object}>}
    */
   async handlerAddEvent(body) {
-    const {user_id} = body;
+    const { user_id } = body;
     body.userInfo = await this.getUserInfo(user_id);
     body.calendars = await this.getCalendarsInChannel(body.channel_id);
     return configAddEvent(body, this.template)
@@ -62,7 +67,7 @@ class SlackMicrosoft extends BaseServer {
    */
   async handlerEvent(req, res) {
     try {
-      let {event, authorizations} = req.body;
+      let { event, authorizations } = req.body;
       const types = Env.chatServiceGOF("TYPE");
       let option = null;
       switch (event.subtype) {
@@ -78,7 +83,7 @@ class SlackMicrosoft extends BaseServer {
         default:
           break;
       }
-      if (option) await Axios(option).then(({data}) => {
+      if (option) await Axios(option).then(({ data }) => {
         if (!data.ok) throw data
       });
 
@@ -98,7 +103,7 @@ class SlackMicrosoft extends BaseServer {
   getEventsInCalendar = (idAccount, idCalendar) => {
     const options = {
       method: 'GET',
-      headers: {'X-Microsoft-AccountId': idAccount},
+      headers: { 'X-Microsoft-AccountId': idAccount },
       url:
         Env.resourceServerGOF("GRAPH_URL") +
         Env.resourceServerGOF("GRAPH_CALENDARS") + `/${idCalendar}/events`
@@ -107,23 +112,143 @@ class SlackMicrosoft extends BaseServer {
   }
 
   /**
-   * Xử lý sự kện add event
+ *
+ * @param {Array} data
+ * @param {Array} calendars
+ * @param {object} account
+ * @returns {Array}
+ */
+  convertEventsData = (events, account, calendar) => {
+    const data = [];
+    const values = events.data.value;
+    if (values.length > 0) {
+      values.forEach(item => {
+        const event = _.pick(item, ['id', 'subject', 'start', 'end', 'location', 'recurrence', 'isAllDay']);
+        event.nameCalendar = calendar.name;
+        event.idCalendar = calendar.id;
+        event.idAccount = account.id;
+        event.timezone = account.timezone;
+        data.push(event);
+      });
+    }
+    return data;
+  }
+  /**
+   * builder Get Account And Calendar
+   * @param {string} idChannel
+   * @returns
+   */
+  builderGetAccountCalendar(idChannel) {
+    const queryBuilder = {
+      account: {
+        $relation: 'channel_microsoft_account',
+        $modify: ["whereAccount"],
+        calendar: {
+          $relation: 'microsoft_calendar',
+        }
+      }
+    }
+
+    return Channel.query()
+      .findById(idChannel)
+      .withGraphFetched(queryBuilder)
+      .modifiers({
+        whereAccount(builder) {
+          builder.select('id', "timezone");
+        },
+      });
+  }
+
+  /**
+   * Sort array
+   * @param {Array} array
+   * @returns {Array}
+   */
+  sortTimeStart(array) {
+    return array.sort(function (a, b) {
+      return (new Date(a.start.dateTime)) - (new Date(b.start.dateTime));
+    });
+  }
+  /**
+   * sort And Set Data
+   * @param {Array} events
+   * @param {Array} eventRedis
+   * @param {string} idCalendar
+   * @param {number} exp
+   */
+  sortAndSetData(events, eventRedis, idCalendar, exp) {
+    events = [...events, ...eventRedis];
+    events = this.sortTimeStart(events);
+    this.setValueRedis(`EVENT-TODAY_${idCalendar}`, JSON.stringify(eventRedis), exp);
+    return events;
+  }
+  /**
+   * Xử lý sự kện show Events Today
    * @param {object} body
    * @return {Promise<{object}>}
    */
-  async handlerShowEvents(body) {
-    const {channel_id = null} = body;
-    const channelCalendar = await ChannelsCalendar.query().findOne({id_channel: channel_id});
-    const idCalendar = channelCalendar.id_calendar.replace(/^MI_/, "");
-    const accountCalendar = await MicrosoftAccountCalendar.query().findOne({id_calendar: idCalendar});
-    const idAccount = accountCalendar.id_account;
-    const option = this.getEventsInCalendar(idAccount, idCalendar);
-    const {data} = await Axios(option);
-    if (data.value.length === 0) return null;
-    body.events = data.value;
-    body.idAccount = idAccount;
-    body.idCalendar = idCalendar;
-    return configShowEvents(body, this.template)
+  async handlerEventsToday(body) {
+    const { channel_id } = body;
+    const option = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}`,
+      },
+      data: {
+        channel: channel_id,
+      },
+      url:
+        Env.chatServiceGet("API_URL") +
+        Env.chatServiceGet("API_POST_MESSAGE"),
+    };
+    try {
+      let events = null;
+      body.userInfo = await this.getUserInfo(body.user_id);
+      events = [];
+      const data = await this.builderGetAccountCalendar(channel_id);
+      let dateTimeNow = Moment(new Date()).utc(true).utcOffset(body.userInfo.user.tz).format();
+      const endToday = new Date(`${dateTimeNow.split("T")[0]}T23:59:59Z`);
+      const dateToday = dateTimeNow.split("T")[0];
+      dateTimeNow = new Date(dateTimeNow);
+      const exp = (endToday - dateTimeNow) / 1000;
+      let hours = MomentTimezone(new Date()).format("Z");
+      hours = - parseInt(hours);
+      const start = MomentTimezone(`${dateToday}T00:00:00Z`).utc(false).add(hours, "h").format();
+      const end = MomentTimezone(`${dateToday}T23:59:59Z`).utc(false).add(hours, "h").format();
+      for (let i = 0; i < data.account.length; i++) {
+        const account = data.account[i];
+        if (account.calendar.length === 0) continue;
+        for (let j = 0; j < account.calendar.length; j++) {
+          const calendar = account.calendar[j];
+          console.log(`1: EVENT-TODAY_${this.instanceId}_${calendar.id}`);
+          let eventRedis = await this.getValueRedis(`EVENT-TODAY_${calendar.id}`);
+          if (eventRedis) {
+            eventRedis = JSON.parse(eventRedis);
+            console.log("eventRedis :", eventRedis);
+            if (eventRedis.length <= 0) continue;
+            events = this.sortAndSetData(events, eventRedis, calendar.id, exp);
+            continue;
+          }
+          eventRedis = await getEventsTodays(account, j, start, end);
+          if (eventRedis.data.value.length === 0) continue;
+          eventRedis = this.convertEventsData(eventRedis, account, calendar);
+          events = this.sortAndSetData(events, eventRedis, calendar.id, exp);
+        }
+      }
+      body.events = events;
+      if (events.length === 0) {
+        option.data.text = " You are free today ! ";
+      } else {
+        const blocksView = await convertBlocksEvents(body, this.template);
+        option.data.blocks = blocksView;
+      }
+      return option;
+    } catch (e) {
+      console.log("⇒⇒⇒ handlerEventsToday ERROR: ", e);
+      option.data.text = " Get event today fail ! Try again.";
+      return option;
+    }
   }
 
   /**
@@ -134,9 +259,10 @@ class SlackMicrosoft extends BaseServer {
    */
   async handlerCommand(req, res) {
     try {
+      res.status(202).send();
       let text = req.body.text.trim();
       let option = null;
-      const {systemSetting} = this.template;
+      const { systemSetting } = this.template;
       switch (text) {
         case "settings":
           option = handlerSettingsMessage(systemSetting, req.body);
@@ -144,18 +270,15 @@ class SlackMicrosoft extends BaseServer {
         case "mi add-event":
           option = await this.handlerAddEvent(req.body);
           break;
-        case "mi show-events":
-          option = await this.handlerShowEvents(req.body);
+        case "mi event-today":
+          option = await this.handlerEventsToday(req.body);
           break;
         default:
           option = null;
           break;
       }
       if (option) await Axios(option)
-        .then(({data}) => {
-          if (!data.ok) throw data
-        });
-      res.status(200).send("OK");
+        .then(({ data }) => { if (!data.ok) throw data });
     } catch (e) {
       console.log("⇒⇒⇒ Handler Command ERROR: ", e);
       res.status(204).send("Command error");
@@ -168,7 +291,7 @@ class SlackMicrosoft extends BaseServer {
    * @return {Promise<[]>}
    */
   async getCalendarsInChannel(channelId) {
-    const channelCalendar = await ChannelsCalendar.query().where({id_channel: channelId});
+    const channelCalendar = await ChannelsCalendar.query().where({ id_channel: channelId });
     const calendars = [];
     const regex = /^MI_/;
     for (let i = 0, length = channelCalendar.length; i < length; i++) {
@@ -197,7 +320,7 @@ class SlackMicrosoft extends BaseServer {
     return new Promise((resolve, reject) => {
       const option = {
         method: 'Get',
-        headers: {'Authorization': `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}`},
+        headers: { 'Authorization': `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}` },
         url: `${Env.chatServiceGOF("API_URL")}${Env.chatServiceGOF("API_USER_INFO")}?user=${id}`,
       };
       Axios(option)
@@ -216,13 +339,13 @@ class SlackMicrosoft extends BaseServer {
    * @returns {object}
    */
   async getOptionEditOfAddEvent(payload, type) {
-    let {values} = payload.view.state;
+    let { values } = payload.view.state;
     const idCalendar = values["MI_select_calendar"]["select_calendar"]["selected_option"].value;
-    const {id_account} = await MicrosoftAccountCalendar.query().findOne({id_calendar: idCalendar});
-    const account = await MicrosoftAccount.query().findOne({id: id_account});
+    const { id_account } = await MicrosoftAccountCalendar.query().findOne({ id_calendar: idCalendar });
+    const account = await MicrosoftAccount.query().findOne({ id: id_account });
     const option = {
       method: 'POST',
-      headers: {"Content-Type": "application/json", 'X-Microsoft-AccountId': id_account},
+      headers: { "Content-Type": "application/json", 'X-Microsoft-AccountId': id_account },
       data: submitAddEvent(values, account),
       url:
         Env.resourceServerGOF("GRAPH_URL") +
@@ -281,15 +404,18 @@ class SlackMicrosoft extends BaseServer {
     const blockId = payload.actions[0].block_id.split('/');
     const values = payload.actions[0].selected_option.value.split('/');
     if (values[0] === "edit") {
-      const event = await getEvent(blockId[0].split('MI_')[1], values[1]);
-      const chanCals = await ChannelsCalendar.query().where({id_channel: payload.channel.id});
-      payload.calendars = await this.getOptionCalendars(chanCals);
-      payload.idCalendar = blockId[1];
+      const event = await getEvent(blockId[0].split('MI_')[1], blockId[1]);
+      const chanCals = await ChannelsCalendar.query().where({ id_channel: payload.channel.id });
+      const calendars = await this.getOptionCalendars(chanCals);
+      payload.calendars = calendars.filter(function (el) {
+        return el != null;
+      });
+      payload.idCalendar = values[1];
       payload.eventEditDT = event.data;
       const user_id = payload.user.id;
       payload.userInfo = await this.getUserInfo(user_id);
-    } else if (values[0] === "delete") {
-      payload.calendar = await MicrosoftCalendar.query().findById(blockId[1]);
+    } else if (values[0] === "del") {
+      payload.calendar = await MicrosoftCalendar.query().findById(values[1]);
     }
     return payload
   }
@@ -301,7 +427,7 @@ class SlackMicrosoft extends BaseServer {
    */
   async handlerPayload(req, res) {
     try {
-      let {payload} = req.body;
+      let { payload } = req.body;
       payload = JSON.parse(payload);
       let option = null;
       switch (payload.type) {
@@ -313,14 +439,14 @@ class SlackMicrosoft extends BaseServer {
           option = handlerBlocksActions(payload, this.template);
           break;
         case "view_submission":
-          res.status(200).send({"response_action": "clear"});
+          res.status(200).send({ "response_action": "clear" });
           option = await this.handlerSubmit(payload);
           break;
         case "view_closed":
-          res.status(200).send({"response_action": "clear"});
+          res.status(200).send({ "response_action": "clear" });
           break;
         default:
-          res.status(200).send({"response_action": "clear"});
+          res.status(200).send({ "response_action": "clear" });
           break;
       }
       if (option) await Axios(option);
@@ -370,7 +496,7 @@ class SlackMicrosoft extends BaseServer {
    */
   async handlerNotifications(value) {
     try {
-      const {subscriptionId, changeType, resource} = value;
+      const { subscriptionId, changeType, resource } = value;
       const idEvent = resource.split('/')[3];
       const idUser = resource.split('/')[1];
       if (changeType === "updated") {
@@ -392,13 +518,13 @@ class SlackMicrosoft extends BaseServer {
         }
       }
       await this.setValueRedis(event.id, JSON.stringify(event), 5);
-      const arrChennelCalendar = await ChannelsCalendar.query().where({id_calendar: `MI_${idCalendar}`, watch: true});
+      const arrChennelCalendar = await ChannelsCalendar.query().where({ id_calendar: `MI_${idCalendar}`, watch: true });
       if (arrChennelCalendar.length === 0) return null;
       const account = await MicrosoftAccount.query().findById(idUser);
       event.timezone = account.timezone;
       const calendar = await MicrosoftCalendar.query().findById(idCalendar);
       event.nameCalendar = calendar.name;
-      const {showEvent} = this.template;
+      const { showEvent } = this.template;
       let datas = null;
       switch (changeType) {
         case "updated":
@@ -437,14 +563,14 @@ class SlackMicrosoft extends BaseServer {
 
   resourceServerHandler(req, res, next) {
     try {
-      const {body = null, query = null} = req;
+      const { body = null, query = null } = req;
       if (body.value) {
         res.status(202).send("OK");
-        const {idAccount} = JSON.parse(cryptoDecode(body.value[0].clientState));
+        const { idAccount } = JSON.parse(cryptoDecode(body.value[0].clientState));
         if (!idAccount) return;
         return this.handlerNotifications(body.value[0]);
       } else if (query) {
-        const {validationToken} = query;
+        const { validationToken } = query;
         return res.status(200).send(validationToken);
       }
       return res.status(400).send("BAD REQUEST");
@@ -468,7 +594,7 @@ class SlackMicrosoft extends BaseServer {
           id: item.id,
           name: item.name,
           address_owner: item.owner.address
-        }, idAccount, this.setValueRedis);
+        }, idAccount, this.setValueRedis, this.instanceId, this.botId);
         await saveAccountCalendar({
           id_calendar: item.id,
           id_account: idAccount,
@@ -487,7 +613,7 @@ class SlackMicrosoft extends BaseServer {
   }
 
   async microsoftAccess(req, res, next) {
-    let {code, state} = req.query;
+    let { code, state } = req.query;
     try {
       const payload = decodeJWT(state);
       const result = await this.getUidToken(payload.uid);
@@ -517,8 +643,7 @@ class SlackMicrosoft extends BaseServer {
         profileUser.id,
         payload.idChannel
       );
-
-      return res.send("Successful !");
+      return res.send("Login Successful !");
     } catch (e) {
       console.log("⇒⇒⇒ Microsoft Access ERROR: ", e);
       return res.send("Login Error !");

@@ -8,6 +8,66 @@ const {v4: uuidv4} = require('uuid');
 require('moment-precise-range-plugin');
 
 /**
+ * get Events Today
+ * @param {Object} account
+ * @param {number} j
+ * @param {date} start
+ * @param {date} end
+ * @returns
+ */
+ const getEventsTodays = (account, j, start, end) => {
+    const option = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Google-AccountId": account.id,
+      },
+      url: Env.resourceServerGOF("API_URL") +
+        Env.resourceServerGOF("API_CALENDAR") +
+        `/${account.calendar[j].id}/events?timeMin=${start}&timeMax=${end}`
+    };
+  return Axios(option);
+}
+/**
+ * convert Blocks Events
+ * @param {Array} events
+ * @returns {Array} blocks
+ */
+const convertBlocksEvents = (body, template) => {
+  const { events } = body;
+  const blocks = [...template.listEvent.blocks];
+  blocks[0].elements[0].image_url = `${Env.serverGOF("URL_PUBLIC")}/icon/GOOGLE_CALENDAR.png`;
+  const blockEvent = JSON.stringify(blocks[1]);
+  blocks.splice(1, 1);
+  for (let i = 0; i < events.length; i++) {
+    const event = events[i];
+    let item = blockEvent;
+    item = JSON.parse(item);
+
+    item.block_id = `GO_${event.idAccount}/${event.idCalendar}/${event.summary}/${i}`;
+    item.accessory.options[0].value = `edit/${event.id}`;
+    item.accessory.options[1].value = `del/${event.id}`;
+
+    item.fields[0].text = `*${event.summary}*`;
+    item.fields[1].text = `Calendar: ${event.nameCalendar}`;
+    if (event.location) {
+      item.fields[4].text = `Location: ${event.location}`;
+    }
+    if (event.end.date) {
+      item.fields[2].text = `Day Start: ` + event.start.date;
+      item.fields[3].text = `Day end: ` + event.end.date;
+    } else {
+      const datetimeStart = Moment(event.start.dateTime).tz(event.timezone).format("DD-MM-YYYYTHH:mm");
+      const datetimeEnd = Moment(event.end.dateTime).tz(event.timezone).format("DD-MM-YYYYTHH:mm");
+      item.fields[2].text = `Day: ${datetimeStart.split('T')[0]}`;
+      item.fields[3].text = `Time: ${datetimeStart.split('T')[1]}`;
+      item.fields[3].text += " - " + datetimeEnd.split('T')[1];
+    }
+    blocks.splice(i + 1, 0, item);
+  }
+  return blocks;
+}
+/**
  * Cấu hình đường dẫn redirect login google
  * @param accessToken
  * @returns {string} url
@@ -180,43 +240,6 @@ const configAddEvent = (body, template) => {
   return option
 };
 
-
-/**
- *
- * @param {object}body
- * @param {object}template
- * @returns {Promise}
- */
-const configShowEvent = (body, template) => {
-  const {event, idAccount, idCalendar, channel_id} = body
-  const blocksView = [...template.listEvent.blocks];
-
-  blocksView[1].block_id = `GO_${idAccount}/${idCalendar}`;
-  blocksView[1].accessory.options[0].value = `edit/${event.id}`;
-  blocksView[1].accessory.options[1].value = `delete/${event.id}`;
-  blocksView[1].fields[0].text = event.summary;
-  if (event.start.date && event.end.date) {
-    blocksView[1].fields[1].text = event.start.date
-    blocksView[1].fields[3].text = event.end.date
-  } else {
-    blocksView[1].fields[3].text = event.start.dateTime.split('T')[0];
-  }
-  const option = {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}`,
-    },
-    data: {
-      channel: channel_id,
-      blocks: blocksView,
-    },
-    url:
-      Env.chatServiceGet("API_URL") +
-      Env.chatServiceGet("API_POST_MESSAGE"),
-  };
-  return option
-}
 /**
  * xử lý action All đây
  * @param {object} payload
@@ -469,10 +492,15 @@ const handlerUpdateEvent = (payload, template) => {
   const timDateEnd = datetimeEnd.split('T')[0]
   let diffTimeDate = Moment.preciseDiff(event.start.dateTime, event.end.dateTime, true);
   // chọn calendar default cho view add event
+
+  let displayName = event.organizer.displayName;
+  if(!displayName){
+    displayName = event.organizer.email;
+  }
   view.blocks[1].accessory.initial_option = {
     "text": {
       "type": "plain_text",
-      "text": event.organizer.displayName,
+      "text": displayName,
       "emoji": true
     },
     "value": event.organizer.email
@@ -632,7 +660,6 @@ function handlerAction(payload, template) {
       break;
   }
   if (option) delete option.data.view.state;
-
   return option
 }
 
@@ -790,9 +817,10 @@ module.exports = {
   requestHome,
   requestButtonSettings,
   configAddEvent,
-  configShowEvent,
   createEvent,
   updateEvent,
   deleteEvent,
   handlerAction,
+  getEventsTodays,
+  convertBlocksEvents
 };

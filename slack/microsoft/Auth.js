@@ -1,6 +1,7 @@
 const qs = require("qs");
 const axios = require("axios");
 const Env = require("../../utils/Env");
+const Redis = require("../../utils/redis/index");
 const MicrosoftAccount = require("../../models/MicrosoftAccount");
 const MicrosoftCalendar = require("../../models/MicrosoftCalendar");
 const MicrosoftAccountCalendar = require("../../models/MicrosoftAccountCalendar");
@@ -8,7 +9,7 @@ const Channel = require("../../models/Channel");
 const ChannelsCalendar = require("../../models/ChannelsCalendar");
 const ChannelMicrosoftAccount = require("../../models/ChannelMicrosoftAccount");
 const ChannelMicrosoftCalendar = require("../../models/ChannelMicrosoftCalendar");
-const {createSubscription} = require('./Subscription');
+const { createSubscription } = require('./Subscription');
 
 /**
  * Lay tai nguyen tokens
@@ -28,7 +29,7 @@ const getToken = (code) => {
     };
     const options = {
       method: "POST",
-      headers: {"content-type": "application/x-www-form-urlencoded"},
+      headers: { "content-type": "application/x-www-form-urlencoded" },
       data: qs.stringify(data),
       url:
         Env.resourceServerGOF("API_URL_AUTH") +
@@ -48,7 +49,7 @@ const getToken = (code) => {
 const getListCalendar = (idAccount) => {
   const options = {
     method: "GET",
-    headers: {'X-Microsoft-AccountId': idAccount},
+    headers: { 'X-Microsoft-AccountId': idAccount },
     url:
       Env.resourceServerGOF("GRAPH_URL") +
       Env.resourceServerGOF("GRAPH_CALENDARS"),
@@ -68,7 +69,7 @@ const getListCalendar = (idAccount) => {
 const getTimeZoneOutlook = (accessTokenAzure) => {
   const options = {
     method: "GET",
-    headers: {Authorization: `Bearer ${accessTokenAzure}`},
+    headers: { Authorization: `Bearer ${accessTokenAzure}` },
     url:
       Env.resourceServerGOF("GRAPH_URL") + Env.resourceServerGOF("GRAPH_MAILBOX_SETTINGS"),
   };
@@ -83,7 +84,7 @@ const getTimeZoneOutlook = (accessTokenAzure) => {
 const getTimeZoneSupport = (accessTokenAzure) => {
   const options = {
     method: "GET",
-    headers: {Authorization: `Bearer ${accessTokenAzure}`},
+    headers: { Authorization: `Bearer ${accessTokenAzure}` },
     url: Env.resourceServerGOF("GRAPH_URL") + Env.resourceServerGOF("GRAPH_TIMEZONE_SUPPORT"),
   };
   return axios(options);
@@ -99,7 +100,7 @@ const getProfileUser = (accessTokenAzure) => {
   return new Promise((resolve, reject) => {
     const options = {
       method: "GET",
-      headers: {Authorization: `Bearer ${accessTokenAzure}`},
+      headers: { Authorization: `Bearer ${accessTokenAzure}` },
       url:
         Env.resourceServerGOF("GRAPH_URL") +
         Env.resourceServerGOF("GRAPH_USER"),
@@ -138,9 +139,11 @@ const saveUserProfile = async (profile, tokens) => {
  * @param {object} calendar
  * @param {string} idAccount
  * @param {function} setValueRedis
+ * @param {string} instanceId
+ * @param {string} botId
  * @returns {void}
  */
-const saveCalendar = async (calendar, idAccount, setValueRedis) => {
+const saveCalendar = async (calendar, idAccount, setValueRedis, instanceId, botId) => {
   const data = await MicrosoftCalendar.query().findOne({
     id: calendar.id,
     address_owner: calendar.address_owner,
@@ -148,7 +151,16 @@ const saveCalendar = async (calendar, idAccount, setValueRedis) => {
   if (!data) {
     await MicrosoftCalendar.query().insert(calendar);
     const resultSub = await createSubscription(calendar.id, idAccount);
-    await setValueRedis(resultSub.data.id, calendar.id, 60 * 60 * 24);
+    await setValueRedis(resultSub.data.id, calendar.id, 60 * 60 * 24 * 2);
+    const sub = {
+      _id: resultSub.data.id,
+      id_calendar: calendar.id,
+      id_account: idAccount,
+      id_instance: instanceId,
+      id_bot: botId,
+      time_exp: Date.now() + 2 * 24 * 60 * 60 * 1000,
+    }
+    Redis.client.publish("subcripton_microsoft", JSON.stringify(sub));
   }
 };
 
@@ -163,7 +175,7 @@ const getNameChannel = (idChannel) => {
   url += idChannel;
   const options = {
     method: "POST",
-    headers: {Authorization: `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}`},
+    headers: { Authorization: `Bearer ${Env.chatServiceGOF("BOT_TOKEN")}` },
     data: {
       channel: idChannel,
     },

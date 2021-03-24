@@ -23,7 +23,7 @@ class ChannelGoogleAccount extends Model {
   }
 
   static get relationMappings() {
-    const Channel = require("./channel");
+    const Channel = require("./Channel");
     const GoogleAccount = require("./GoogleAccount");
     return {
       channels: {
